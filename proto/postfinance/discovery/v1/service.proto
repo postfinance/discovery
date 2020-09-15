@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "ServiceProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Service represents a service.
+message Service {
+  string id = 1;
+  string name = 2;
+  string endpoint = 3;
+  map<string, string> labels = 4;
+  string description = 5;
+  google.protobuf.Timestamp modified = 6;
+  string namespace = 7;
+}

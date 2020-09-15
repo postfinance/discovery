@@ -1,0 +1,35 @@
+protoc:
+  version: 3.9.1
+  includes:
+    - /usr/local/include/
+
+lint:
+  group: uber2
+  java_package_prefix: "ch"
+  rules:
+    remove:
+      # disable obj-c, php and c# namespace prefixes
+      - FILE_OPTIONS_REQUIRE_PHP_NAMESPACE
+      - FILE_OPTIONS_REQUIRE_OBJC_CLASS_PREFIX
+      - FILE_OPTIONS_REQUIRE_CSHARP_NAMESPACE
+      # disable enum prefix enforcement
+      - ENUM_FIELD_PREFIXES_EXCEPT_MESSAGE
+      - ENUM_ZERO_VALUES_INVALID_EXCEPT_MESSAGE
+      # disable requirement that enums are upper case
+      # (for example: context is always lower case @ PostFinance)
+      - ENUM_FIELD_NAMES_UPPERCASE
+      - ENUM_FIELD_NAMES_UPPER_SNAKE_CASE
+      # do not require the _time suffix for google.protobuf.Timestamp types
+      - WKT_TIMESTAMP_SUFFIX
+      # also matches names like 'metadata'...
+      - NAMES_NO_DATA
+generate:
+  go_options:
+    import_path: github.com/zbindenren/discovery/pb
+  plugins:
+    - name: go
+      type: go
+      flags: plugins=grpc
+      output: ./..
+    - name: grpc-gateway
+      output: ./..
