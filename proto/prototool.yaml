@@ -30,6 +30,6 @@ generate:
     - name: go
       type: go
       flags: plugins=grpc
-      output: ./..
+      output: ./../gen
     - name: grpc-gateway
-      output: ./..
+      output: ./../gen
