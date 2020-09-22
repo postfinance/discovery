@@ -1,2 +1,2 @@
 # discovery
-Service discovery for prometheus.
+Service discovery for prometheus with etcd backend.
