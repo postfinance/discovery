@@ -8,25 +8,25 @@ option java_multiple_files = true;
 option java_outer_classname = "ServerApiProto";
 option java_package = "ch.postfinance.discovery.v1";
 
-import "postfinance/discovery/v1/server.proto";
+import "server.proto";
 import "google/api/annotations.proto";
 
 // ServerAPI is responsible for registering and unregistering servers.
 service ServerAPI {
-  // Register registers a server.
+  // RegisterServer registers a server.
   rpc RegisterServer(RegisterServerRequest) returns (RegisterServerResponse) {
     option (google.api.http) = {
       post: "/v1/servers"
       body: "*"
     };
   }
-  // UnRegister unregisters a server.
+  // UnRegisterServer unregisters a server.
   rpc UnregisterServer(UnregisterServerRequest) returns (UnregisterServerResponse) {
     option (google.api.http) = {
       delete: "/v1/servers/{name}"
     };
   }
-  // List lists all servers.
+  // ListServer lists all servers.
   rpc ListServer(ListServerRequest) returns (ListServerResponse) {
     option (google.api.http) = {
       get: "/v1/servers"

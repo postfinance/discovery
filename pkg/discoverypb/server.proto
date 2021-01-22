@@ -11,7 +11,11 @@ import "google/protobuf/timestamp.proto";
 
 // Server represents a server.
 message Server {
+  // name is the server's name.
   string name = 1;
+  // labels are key/value pairs that can attached to a service. it provides the possibility
+  // to choose servers during service registration via selector.
   map<string, string> labels = 2;
+  // modified is the the time when the service is created or modified.
   google.protobuf.Timestamp modified = 3;
 }

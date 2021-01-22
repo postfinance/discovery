@@ -8,40 +8,33 @@ option java_multiple_files = true;
 option java_outer_classname = "ServiceApiProto";
 option java_package = "ch.postfinance.discovery.v1";
 
-import "postfinance/discovery/v1/service.proto";
+import "service.proto";
 import "google/api/annotations.proto";
 
 // ServiceAPI is responsible for registering and unregistering services.
 service ServiceAPI {
-  // Register registers a service.
-  rpc Register(RegisterRequest) returns (RegisterResponse) {
+  // RegisterService registers a service.
+  rpc RegisterService(RegisterServiceRequest) returns (RegisterServiceResponse) {
     option (google.api.http) = {
       post: "/v1/services"
       body: "*"
     };
   }
-  // UnRegister unregisters a service.
-  rpc UnRegister(UnRegisterRequest) returns (UnRegisterResponse) {
+  // UnRegisterService unregisters a service.
+  rpc UnRegisterService(UnRegisterServiceRequest) returns (UnRegisterServiceResponse) {
     option (google.api.http) = {
       delete: "/v1/services/{namespace}/{id}"
     };
   }
-  // List lists all services.
-  rpc List(ListRequest) returns (ListResponse) {
+  // ListService lists all services.
+  rpc ListService(ListServiceRequest) returns (ListServiceResponse) {
     option (google.api.http) = {
       get: "/v1/services"
     };
   }
-  // List lists all namespaces.
-  rpc ListNamespace(ListNamespaceRequest) returns (ListNamespaceResponse) {
-    option (google.api.http) = {
-      get: "/v1/namespaces"
-    };
-  }
 }
 
-
-message RegisterRequest {
+message RegisterServiceRequest {
   string name = 1;
   string endpoint = 2;
   map<string, string> labels = 3;
@@ -49,31 +42,22 @@ message RegisterRequest {
   string namespace = 5;
 }
 
-message RegisterResponse {
+message RegisterServiceResponse {
   Service service = 1;
 }
 
-message UnRegisterRequest {
+message UnRegisterServiceRequest {
   string id = 1;
   string namespace = 2;
 }
 
-message UnRegisterResponse {
+message UnRegisterServiceResponse {
 }
 
-message ListRequest {
+message ListServiceRequest {
   string namespace = 1;
 }
 
-message ListResponse {
+message ListServiceResponse {
   repeated Service services = 1;
 }
-
-message ListNamespaceRequest {
-}
-
-message ListNamespaceResponse {
-  repeated string namespaces = 1;
-}
-
-

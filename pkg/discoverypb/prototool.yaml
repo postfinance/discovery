@@ -25,11 +25,11 @@ lint:
       - NAMES_NO_DATA
 generate:
   go_options:
-    import_path: github.com/zbindenren/discovery/pb
+    import_path: github.com/zbindenren/discovery/discoverypb
   plugins:
     - name: go
       type: go
       flags: plugins=grpc
-      output: ./../gen
+      output: .
     - name: grpc-gateway
-      output: ./../gen
+      output: .

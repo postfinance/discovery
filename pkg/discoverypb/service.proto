@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "ServiceProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Service represents a service.
+message Service {
+  // id is the generated ID of the registered service.
+  string id = 1;
+  // name is the name of the service. This name is used to group the registered services.
+  string name = 2;
+  // endpoint is the URL under which the service can be reached.
+  string endpoint = 3;
+  // namespace is the namespace where the service is registered. A service can only exist once per namespace.
+  string namespace = 4;
+  // selector is an optional k8s style selector to choose a group of servers a service is distributed to.
+  string selector = 5;
+  // servers is the list of servers responsible for scraping that service.
+  repeated string servers = 6;
+  // labels are key/value pairs that can attached to a service.
+  map<string, string> labels = 7;
+  // describtion can be used to descrive the service.
+  string description = 8;
+  // modified is the the time when the service is created or modified.
+  google.protobuf.Timestamp modified = 9;
+}

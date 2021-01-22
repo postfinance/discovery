@@ -1,0 +1,58 @@
+project_name: discovery
+release:
+    disable: true
+builds:
+    - id: discoveryd
+      goos:
+        - linux
+      goarch:
+        - amd64
+      main: cmd/discoveryd/main.go
+      binary: discoveryd
+      env:
+        - CGO_ENABLED=0
+    - id: discovery
+      goos:
+        - linux
+      goarch:
+        - amd64
+      main: cmd/discovery/main.go
+      binary: discovery
+      env:
+        - CGO_ENABLED=0
+archives:
+    - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}-{{ .Version }}'
+      replacements:
+        amd64: x86_64
+      format: zip
+      allow_different_binary_count: false
+nfpms:
+    - file_name_template: '{{ .ProjectName }}-{{ .Version }}.{{ .Arch }}'
+      package_name: discovery
+      replacements:
+        amd64: x86_64
+        arm: ARM
+        arm64: ARM64
+        darwin: macOS
+        linux: Linux
+        windows: Windows
+      formats:
+        - deb
+        - rpm
+      vendor: Die Schweizerische Post - PostFinance
+      homepage: github.com/zbindenren/discovery
+      maintainer: Rene Zbinden <rene.zbinden@postfinance.ch>
+      description: TBD
+      license: Die Schweizerische Post - PostFinance
+      bindir: /usr/bin
+checksum:
+    name_template: checksums.txt
+dockers:
+    - ids:
+        - discovery
+      goos: linux
+      goarch: amd64
+      dockerfile: packaging/docker/Dockerfile
+      skip_push: "true"
+      extra_files:
+        - packaging/docker/docker-entrypoint.sh

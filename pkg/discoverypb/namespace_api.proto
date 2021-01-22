@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "NamespaceApiProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "namespace.proto";
+import "google/api/annotations.proto";
+
+// NamespaceAPI is responsible for registering and unregistering namespaces.
+service NamespaceAPI {
+  // RegisterNamespace registers a namespace.
+  rpc RegisterNamespace(RegisterNamespaceRequest) returns (RegisterNamespaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/namespaces"
+      body: "*"
+    };
+  }
+  // UnRegisterNamespace unregisters a namespace.
+  rpc UnregisterNamespace(UnregisterNamespaceRequest) returns (UnregisterNamespaceResponse) {
+    option (google.api.http) = {
+      delete: "/v1/namespaces/{name}"
+    };
+  }
+  // ListNamespace lists all namespaces.
+  rpc ListNamespace(ListNamespaceRequest) returns (ListNamespaceResponse) {
+    option (google.api.http) = {
+      get: "/v1/namespaces"
+    };
+  }
+}
+
+message RegisterNamespaceRequest {
+  string name = 1;
+  int32 export = 2;
+}
+
+message RegisterNamespaceResponse {
+  Namespace namespace = 1;
+}
+
+message UnregisterNamespaceRequest {
+  string name = 1;
+}
+
+message UnregisterNamespaceResponse {
+}
+
+message ListNamespaceRequest {
+}
+
+message ListNamespaceResponse {
+  repeated Namespace namespaces = 1;
+}

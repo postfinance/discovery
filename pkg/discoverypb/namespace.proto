@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "NamespaceProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Namespace represents a namespace.
+message Namespace {
+  // name is the namespace name.
+  string name = 1;
+  // export configures how the services in namespaces gets exported.
+  int32 export = 2;
+  // modified is the the time when the service is created or modified.
+  google.protobuf.Timestamp modified = 3;
+}

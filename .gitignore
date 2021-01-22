@@ -1,0 +1,4 @@
+proto/local
+dist/
+.a*
+discovery*.yml
