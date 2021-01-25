@@ -71,6 +71,15 @@ func TestExporter(t *testing.T) {
 	})
 
 	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial") // empty
+
+	blackboxSvc := newService("b1", "blackbox", "https://blackbox1.pnet.ch")
+	blackboxSvc.Namespace = "appl-blackbox"
+	serviceGetter.addEvent(&repo.ServiceEvent{
+		Event:   repo.Change,
+		Service: blackboxSvc,
+	})
+
+	assertFileContains(t, filepath.Join(dir, "server1/blackbox/appl-blackbox/blackbox.json"), `[{"targets":["https://blackbox1.pnet.ch"]}]`)
 }
 
 type serviceRepoMock struct {
@@ -160,6 +169,11 @@ func newNamespaceMock() *namespaceRepoMock {
 			"default": &discovery.Namespace{
 				Name:     "default",
 				Export:   discovery.Standard,
+				Modified: time.Now(),
+			},
+			"appl-blackbox": &discovery.Namespace{
+				Name:     "appl-blackbox",
+				Export:   discovery.Blackbox,
 				Modified: time.Now(),
 			},
 		},
