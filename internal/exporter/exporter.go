@@ -139,6 +139,8 @@ func (e Exporter) directory() string {
 }
 
 func (e Exporter) sync() error {
+	e.destinations.reset()
+
 	svcs, err := e.serviceRepo.List("", "")
 	if err != nil {
 		return err

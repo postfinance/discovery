@@ -110,6 +110,12 @@ func (f *files) getFiles() map[string]*file {
 	return files
 }
 
+func (f *files) reset() {
+	f.m.Lock()
+	f.files = map[string]*file{}
+	f.m.Unlock()
+}
+
 func (f *files) addService(s *discovery.Service) error {
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -204,7 +210,7 @@ func (f *files) writeFile(destDir string, file *file) error {
 
 // write writes all file to destDir. It only touches files, that have pending writes.
 func (f *files) write(destDir string) error {
-	for _, file := range f.files {
+	for _, file := range f.getFiles() {
 		if file.exportCfg == discovery.Disabled {
 			f.log.Debugw("export for namespace is disabled", "namespace", file.namespace)
 			continue
