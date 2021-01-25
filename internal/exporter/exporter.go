@@ -91,6 +91,7 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 			return nil
 		case <-ticker.C:
 			e.log.Debug("initiating resync")
+			e.destinations.reset()
 
 			if err := e.sync(); err != nil {
 				e.log.Errorw("sync failed", "err", err)
@@ -139,8 +140,6 @@ func (e Exporter) directory() string {
 }
 
 func (e Exporter) sync() error {
-	e.destinations.reset()
-
 	svcs, err := e.serviceRepo.List("", "")
 	if err != nil {
 		return err

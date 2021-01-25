@@ -3,7 +3,6 @@ package exporter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -102,7 +101,6 @@ func (s *serviceRepoMock) addEvent(se *repo.ServiceEvent) {
 	}
 
 	s.initialServices[se.Service.ID] = se.Service
-	fmt.Println(len(s.initialServices))
 
 	s.ch <- se
 }
