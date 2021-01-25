@@ -91,6 +91,7 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 			return nil
 		case <-ticker.C:
 			e.log.Debug("initiating resync")
+
 			if err := e.sync(); err != nil {
 				e.log.Errorw("sync failed", "err", err)
 			}
