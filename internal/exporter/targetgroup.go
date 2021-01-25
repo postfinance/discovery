@@ -13,12 +13,16 @@ type targetGroup struct {
 }
 
 // newTargetGroup creates a new target group from discovery.Service.
-func newTargetGroup(s service) targetGroup {
+func newTargetGroup(s service, cfg discovery.ExportConfig) targetGroup {
 	tg := targetGroup{
 		Labels: make(discovery.Labels),
 	}
 
-	if s.isBlackbox() {
+	if cfg == discovery.Disabled {
+		return tg
+	}
+
+	if cfg == discovery.Blackbox {
 		tg.Targets = []string{s.Endpoint.String()}
 	} else {
 		tg.Targets = []string{s.Endpoint.Host}

@@ -38,9 +38,10 @@ func New(b store.Backend, log *zap.SugaredLogger, destDir string) *Exporter {
 		log:         log,
 		destDir:     destDir,
 		destinations: files{
-			m:     &sync.Mutex{},
-			files: map[string]*file{},
-			log:   log,
+			m:               &sync.Mutex{},
+			files:           map[string]*file{},
+			log:             log,
+			namespaceGetter: repo.NewNamespace(b),
 		},
 	}
 }
@@ -89,6 +90,7 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 
 			return nil
 		case <-ticker.C:
+			e.log.Debug("initiating resync")
 			if err := e.sync(); err != nil {
 				e.log.Errorw("sync failed", "err", err)
 			}
@@ -161,4 +163,8 @@ type serviceChanLister interface {
 
 type serverGetter interface {
 	Get(serverName string) (*discovery.Server, error)
+}
+
+type namespaceGetter interface {
+	Get(namespaceName string) (*discovery.Namespace, error)
 }

@@ -43,12 +43,12 @@ func (n Namespace) Validate() error {
 
 // Header creates the header for csv or table output.
 func (n Namespace) Header() []string {
-	return []string{"NAME", "MODIFIED", "EXPORTCONFIG"}
+	return []string{"NAME", "EXPORTCONFIG", "MODIFIED"}
 }
 
 // Row creates a row for csv or table output.
 func (n Namespace) Row() []string {
-	return []string{n.Name, n.Modified.String(), n.Export.String()}
+	return []string{n.Name, n.Export.String(), n.Modified.String()}
 }
 
 // Namespaces is a list of namespaces.

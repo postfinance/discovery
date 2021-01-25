@@ -36,9 +36,10 @@ func TestExporter(t *testing.T) {
 		serviceRepo: serviceGetter,
 		destDir:     dir,
 		destinations: files{
-			m:     &sync.Mutex{},
-			files: map[string]*file{},
-			log:   l.Get(),
+			m:               &sync.Mutex{},
+			files:           map[string]*file{},
+			log:             l.Get(),
+			namespaceGetter: newNamespaceMock(),
 		},
 	}
 
@@ -52,25 +53,25 @@ func TestExporter(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	assertFileContains(t, filepath.Join(dir, "server1/default/default/initial.json"), "initial1.pnet.ch")
-	assertFileContains(t, filepath.Join(dir, "server1/default/default/initial.json"), "initial2.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial2.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Change,
 		Service: newService("i1", "changedjob", "https://initial1.pnet.ch"),
 	})
 
-	assertFileContains(t, filepath.Join(dir, "server1/default/default/initial.json"), "initial2.pnet.ch")
-	assertFileNotContains(t, filepath.Join(dir, "server1/default/default/initial.json"), "initial1.pnet.ch")
-	assertFileContains(t, filepath.Join(dir, "server1/default/default/changedjob.json"), "initial1.pnet.ch")
-	assertFileNotContains(t, filepath.Join(dir, "server1/default/default/changedjob.json"), "initial2.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial2.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial1.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial2.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Delete,
 		Service: newService("i1", "changedjob", "https://initial1.pnet.ch"),
 	})
 
-	assertFileNotContains(t, filepath.Join(dir, "server1/default/default/changedjob.json"), "initial") // empty
+	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial") // empty
 }
 
 type serviceRepoMock struct {
@@ -136,6 +137,33 @@ func newServerMock() *serverRepoMock {
 	mock := &serverRepoMock{
 		servers: map[string]*discovery.Server{
 			"server1": discovery.NewServer("server1", discovery.Labels{}),
+		},
+	}
+
+	return mock
+}
+
+type namespaceRepoMock struct {
+	namespaces map[string]*discovery.Namespace
+}
+
+func (n *namespaceRepoMock) Get(namespace string) (*discovery.Namespace, error) {
+	ns, ok := n.namespaces[namespace]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+
+	return ns, nil
+}
+
+func newNamespaceMock() *namespaceRepoMock {
+	mock := &namespaceRepoMock{
+		namespaces: map[string]*discovery.Namespace{
+			"default": &discovery.Namespace{
+				Name:     "default",
+				Export:   discovery.Standard,
+				Modified: time.Now(),
+			},
 		},
 	}
 

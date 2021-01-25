@@ -53,7 +53,7 @@ func (n namespaceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 
 type namespaceRegister struct {
 	Name         string `arg:"true" help:"Namespace name name." required:"true"`
-	ExportConfig string `short:"e" help:"Configures how services get exported" enum:"blackbox,standard,disabled" default:"standard"`
+	ExportConfig string `short:"e" help:"Configures how services get exported. Possible values: blackbox,standard and disabled." enum:"blackbox,standard,disabled" default:"standard"`
 }
 
 func (n namespaceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {

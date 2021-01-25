@@ -6,13 +6,6 @@ import (
 	"github.com/zbindenren/discovery"
 )
 
-const (
-	// exportConfigMetaLabel configures how the service is exported. Two configs are supported: default, blackbox.
-	exportConfigMetaLabel = "__meta_export_config"
-	// blackboxName is the name of the directory and configuration for services that are exported as blackbox.
-	blackboxName = "blackbox"
-)
-
 type service struct {
 	discovery.Service
 }
@@ -22,9 +15,9 @@ func (s service) key() string {
 }
 
 // isBlackbox returns true if service has "blackbox" as exportConfigMetaLabel label.
-func (s service) isBlackbox() bool {
-	return s.Labels.Get(exportConfigMetaLabel) == blackboxName
-}
+// func (s service) isBlackbox() bool {
+// return s.Labels.Get(exportConfigMetaLabel) == blackboxName
+// }
 
 type services map[string]service
 

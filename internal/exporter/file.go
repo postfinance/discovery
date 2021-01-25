@@ -18,21 +18,16 @@ import (
 // file represents a prometheus discovery file. It contains
 // all target groups for a job.
 type file struct {
-	job        string
-	namespace  string
-	hash       string
-	isBlackbox bool
-	m          *sync.Mutex
-	services   services
+	job       string
+	namespace string
+	hash      string
+	exportCfg discovery.ExportConfig
+	m         *sync.Mutex
+	services  services
 }
 
 func (f *file) relativePath() string {
-	p := "default"
-	if f.isBlackbox {
-		p = blackboxName
-	}
-
-	return filepath.Join(p, f.namespace, f.job) + ".json"
+	return filepath.Join(f.exportCfg.String(), f.namespace, f.job) + ".json"
 }
 
 func (f *file) addService(s service) error {
@@ -81,7 +76,7 @@ func (f *file) data() (data []byte, hash string, err error) {
 	f.m.Lock()
 	defer f.m.Unlock()
 
-	if len(f.services) == 0 {
+	if len(f.services) == 0 || f.exportCfg == discovery.Disabled {
 		return []byte{}, "", nil
 	}
 
@@ -89,7 +84,7 @@ func (f *file) data() (data []byte, hash string, err error) {
 
 	svcs := f.services.list()
 	for i := range svcs {
-		t = append(t, newTargetGroup(svcs[i]))
+		t = append(t, newTargetGroup(svcs[i], f.exportCfg))
 	}
 
 	d, err := json.Marshal(t)
@@ -101,9 +96,10 @@ func (f *file) data() (data []byte, hash string, err error) {
 }
 
 type files struct {
-	m     *sync.Mutex
-	log   *zap.SugaredLogger
-	files map[string]*file // files per namespace:jobname
+	m               *sync.Mutex
+	log             *zap.SugaredLogger
+	namespaceGetter namespaceGetter
+	files           map[string]*file // files per namespace:jobname
 }
 
 func (f *files) getFiles() map[string]*file {
@@ -120,13 +116,18 @@ func (f *files) addService(s *discovery.Service) error {
 
 	svc := service{*s}
 
+	ns, err := f.namespaceGetter.Get(svc.Namespace)
+	if err != nil {
+		return err
+	}
+
 	if _, ok := f.files[svc.key()]; !ok {
 		f.files[svc.key()] = &file{
-			services:   services{},
-			job:        svc.Name,
-			namespace:  svc.Namespace,
-			m:          &sync.Mutex{},
-			isBlackbox: svc.isBlackbox(),
+			services:  services{},
+			job:       svc.Name,
+			namespace: svc.Namespace,
+			m:         &sync.Mutex{},
+			exportCfg: ns.Export,
 		}
 	}
 
@@ -204,8 +205,12 @@ func (f *files) writeFile(destDir string, file *file) error {
 // write writes all file to destDir. It only touches files, that have pending writes.
 func (f *files) write(destDir string) error {
 	for _, file := range f.files {
-		err := f.writeFile(destDir, file)
+		if file.exportCfg == discovery.Disabled {
+			f.log.Debugw("export for namespace is disabled", "namespace", file.namespace)
+			continue
+		}
 
+		err := f.writeFile(destDir, file)
 		if err != nil {
 			return err
 		}
