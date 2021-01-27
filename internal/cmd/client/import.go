@@ -11,7 +11,8 @@ import (
 )
 
 type importCmd struct {
-	Path string `arg:"true" help:"Path to yaml file." required:"true"`
+	Path     string `arg:"true" help:"Path to yaml file." required:"true"`
+	Selector string `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
 }
 
 func (i importCmd) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
