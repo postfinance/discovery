@@ -33,7 +33,7 @@ type Service struct {
 
 // NewService creates a new service with ID and timestamp.
 func NewService(name, endpoint string) (*Service, error) {
-	u, err := url.Parse(endpoint)
+	u, err := url.ParseRequestURI(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("'%s' is not a valid url: %v", endpoint, err)
 	}
