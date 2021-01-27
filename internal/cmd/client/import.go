@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"io/ioutil"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/zbindenren/discovery"
@@ -21,7 +23,7 @@ func (i importCmd) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error 
 		return err
 	}
 
-	ctx, cancel := g.ctx()
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	d, err := ioutil.ReadFile(i.Path)
@@ -52,6 +54,7 @@ func (i importCmd) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error 
 			Description: s.Description,
 			Labels:      s.Tags,
 			Namespace:   s.Namespace,
+			Selector:    s.Selector,
 		})
 
 		if err != nil {
