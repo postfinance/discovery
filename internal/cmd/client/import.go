@@ -41,8 +41,9 @@ func (i importCmd) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error 
 		return err
 	}
 
-	for i := range services {
-		s := services[i]
+	for j := range services {
+		s := services[j]
+		s.Selector = i.Selector
 		l.Debugw("import serivce", s.KeyVals()...)
 
 		_, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
