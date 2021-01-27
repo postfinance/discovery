@@ -88,5 +88,5 @@ func (s Server) Header() []string {
 
 // Row creates a row for csv or table output.
 func (s Server) Row() []string {
-	return []string{s.Name, s.Modified.String(), s.Labels.String()}
+	return []string{s.Name, s.Modified.Format(time.RFC3339), s.Labels.String()}
 }

@@ -94,7 +94,7 @@ func (s Service) Header() []string {
 
 // Row creates a row for csv or table output.
 func (s Service) Row() []string {
-	return []string{s.Name, s.Namespace, s.ID, s.Endpoint.String(), strings.Join(s.Servers, ","), s.Labels.String(), s.Selector, s.Modified.String(), s.Description}
+	return []string{s.Name, s.Namespace, s.ID, s.Endpoint.String(), strings.Join(s.Servers, ","), s.Labels.String(), s.Selector, s.Modified.Format(time.RFC3339), s.Description}
 }
 
 // UnmarshalJSON is a custom json unmarshaller.
@@ -209,17 +209,6 @@ func ServiceBySelector(selector labels.Selector) func(Service) bool {
 	}
 }
 
-// Duplicates returns all duplicate services.
-// TODO(zbindenren): duplicates should not be possible in future
-func (s Services) Duplicates() Services {
-	return s.duplicates(false)
-}
-
-// Expired returns all duplicate expired services.
-func (s Services) Expired() Services {
-	return s.duplicates(true)
-}
-
 // Labels represents key value pairs.
 type Labels map[string]string
 
@@ -255,33 +244,6 @@ func (l Labels) Has(key string) bool {
 // Get gets the value for key.
 func (l Labels) Get(key string) string {
 	return l[key]
-}
-
-// If expiredOnly is true, only services with older Modified timestamps are returned.
-func (s Services) duplicates(expiredOnly bool) Services {
-	m := map[string][]Service{}
-
-	for i := range s {
-		m[s[i].Endpoint.String()] = append(m[s[i].Endpoint.String()], s[i])
-	}
-
-	duplicates := Services{}
-
-	for k := range m {
-		svcs := m[k]
-		if len(svcs) > 1 {
-			if !expiredOnly {
-				duplicates = append(duplicates, svcs...)
-				continue
-			}
-
-			sort.Slice(svcs, func(i, j int) bool { return svcs[i].Modified.After(svcs[j].Modified) })
-
-			duplicates = append(duplicates, svcs[1:]...)
-		}
-	}
-
-	return duplicates
 }
 
 // KeyVals represents the service as slice of interface.

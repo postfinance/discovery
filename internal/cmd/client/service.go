@@ -56,6 +56,7 @@ type serviceRegister struct {
 	Name      string            `arg:"true" help:"The service name. This will represent the job name in prometheus." required:"true"`
 	Labels    map[string]string `short:"l" help:"Labels for the service." mapsep:","`
 	Namespace string            `short:"n" help:"The namespace for the service" default:"default" required:"true"`
+	Selector  string            `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
 }
 
 func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
@@ -72,12 +73,17 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		Namespace: s.Namespace,
 		Endpoint:  s.Endpoint,
 		Labels:    s.Labels,
+		Selector:  s.Selector,
 	})
 	if err != nil {
 		return err
 	}
 
 	l.Infow("service registered", "id", r.GetService().GetId())
+
+	if len(r.Service.GetServers()) == 0 {
+		l.Infow("no suitable servers found - change selector if you want to export this service", "selector", r.Service.GetSelector())
+	}
 
 	return nil
 }

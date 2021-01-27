@@ -40,6 +40,7 @@ message RegisterServiceRequest {
   map<string, string> labels = 3;
   string description = 4;
   string namespace = 5;
+  string selector = 6;
 }
 
 message RegisterServiceResponse {

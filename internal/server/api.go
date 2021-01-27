@@ -59,6 +59,7 @@ func (a *API) RegisterService(_ context.Context, req *discoveryv1.RegisterServic
 
 	s.Labels = req.GetLabels()
 	s.Description = req.GetDescription()
+	s.Selector = req.GetSelector()
 
 	if req.Namespace != "" {
 		s.Namespace = req.Namespace

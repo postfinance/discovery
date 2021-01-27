@@ -48,7 +48,7 @@ func (n Namespace) Header() []string {
 
 // Row creates a row for csv or table output.
 func (n Namespace) Row() []string {
-	return []string{n.Name, n.Export.String(), n.Modified.String()}
+	return []string{n.Name, n.Export.String(), n.Modified.Format(time.RFC3339)}
 }
 
 // Namespaces is a list of namespaces.

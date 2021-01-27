@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/url"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -225,34 +224,6 @@ func TestTags(t *testing.T) {
 	for _, tc := range tt {
 		assert.Equal(t, tc.expected, tc.tags.String())
 	}
-}
-
-func TestDuplicates(t *testing.T) {
-	now := time.Now()
-	old := now.Add(-1 * time.Hour)
-	ep, err := url.Parse("http://example.com")
-	require.NoError(t, err)
-
-	svcs := Services{
-		Service{
-			Name:     "new",
-			Endpoint: ep,
-			Modified: now,
-		},
-		Service{
-			Name:     "old",
-			Endpoint: ep,
-			Modified: old,
-		},
-	}
-
-	t.Run("Duplicates", func(t *testing.T) {
-		assert.Len(t, svcs.Duplicates(), 2)
-	})
-	t.Run("Expired", func(t *testing.T) {
-		assert.Len(t, svcs.Expired(), 1)
-		assert.Equal(t, svcs.Expired()[0].Name, "old")
-	})
 }
 
 func TestMarshalService(t *testing.T) {
