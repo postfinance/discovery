@@ -120,6 +120,16 @@ func (s *Server) startGRPC() error {
 		return err
 	}
 
+	if err := s.reg.Register(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "discovery_replication_factor",
+			Help: "A metric with with constant value showing the configured replication factor.",
+		},
+		func() float64 { return float64(s.numReplicas) },
+	)); err != nil {
+		return err
+	}
+
 	r, err := registry.New(s.backend, s.reg, s.l, s.numReplicas)
 	if err != nil {
 		return err
