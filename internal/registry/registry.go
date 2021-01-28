@@ -151,6 +151,13 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 		return nil, fmt.Errorf("namespace %s: %w", s.Namespace, ErrNotFound)
 	}
 
+	old, _ := r.serviceRepo.Get(r.idGenerator(s.Endpoint.String()), s.Namespace) // we ignore errors, because this is only used to update metrics
+	if old != nil && s.ID == "" {
+		for i := range old.Servers {
+			r.servicesCount.WithLabelValues(old.Servers[i]).Dec() // if service already exists, we decrease its metrics value to handle redistributions
+		}
+	}
+
 	r.log.Infow("register service", s.KeyVals()...)
 
 	servers, err := r.get(s.Endpoint.String(), r.numReplicas, s.Selector)
