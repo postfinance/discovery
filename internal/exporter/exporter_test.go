@@ -54,6 +54,7 @@ func TestExporter(t *testing.T) {
 
 	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
 	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial2.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial3.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Change,
@@ -64,6 +65,12 @@ func TestExporter(t *testing.T) {
 	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
 	assertFileContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial1.pnet.ch")
 	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial2.pnet.ch")
+
+	serviceGetter.addEvent(&repo.ServiceEvent{
+		Event:   repo.Change,
+		Service: newService("d1", "initial", "https://initial33.pnet.ch", "other-server1"),
+	})
+	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial33.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Delete,
@@ -93,6 +100,7 @@ func newServiceMock(ch chan *repo.ServiceEvent) *serviceRepoMock {
 		initialServices: map[string]discovery.Service{
 			"i1": newService("i1", "initial", "https://initial1.pnet.ch"),
 			"i2": newService("i2", "initial", "https://initial2.pnet.ch"),
+			"o1": newService("o1", "otherServer", "https://initial3.pnet.ch", "other-server1"),
 		},
 	}
 
@@ -143,7 +151,8 @@ func (s *serverRepoMock) Get(serverName string) (*discovery.Server, error) {
 func newServerMock() *serverRepoMock {
 	mock := &serverRepoMock{
 		servers: map[string]*discovery.Server{
-			"server1": discovery.NewServer("server1", discovery.Labels{}),
+			"server1":       discovery.NewServer("server1", discovery.Labels{}),
+			"other-server1": discovery.NewServer("other-server1", discovery.Labels{}),
 		},
 	}
 
@@ -182,10 +191,13 @@ func newNamespaceMock() *namespaceRepoMock {
 	return mock
 }
 
-func newService(id, name, endpoint string) discovery.Service {
+func newService(id, name, endpoint string, servers ...string) discovery.Service {
 	s := *discovery.MustNewService(name, endpoint)
 	s.ID = id
-	s.Servers = []string{"server1"}
+
+	if len(servers) == 0 {
+		s.Servers = []string{"server1"}
+	}
 
 	return s
 }

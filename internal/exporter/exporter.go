@@ -101,13 +101,20 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 }
 
 func (e Exporter) handle(event *repo.ServiceEvent) {
+	ignore := !event.Service.HasServer(e.server)
 	msg := append([]interface{}{
 		"event", event.Event.String(),
+		"ignore", ignore,
 	}, event.Service.KeyVals()...)
+
+	e.log.Debugw("service event", msg...)
+
+	if ignore {
+		return
+	}
 
 	switch event.Event {
 	case repo.Change:
-		e.log.Debugw("change event", msg...)
 		existing := e.destinations.getService(event.Namespace, event.ID)
 		// handle path changes
 		if existing != nil && existing.Name != event.Service.Name {
@@ -121,8 +128,6 @@ func (e Exporter) handle(event *repo.ServiceEvent) {
 			e.log.Errorw("failed to add service", msg...)
 		}
 	case repo.Delete:
-		e.log.Debugw("delete event", msg...)
-
 		if err := e.destinations.delService(event.Service.Namespace, event.Service.ID); err != nil {
 			e.log.Errorw("failed to delete service", "namespace", event.Service.Namespace, "id", event.Service.ID, "err", err)
 		}
@@ -145,6 +150,7 @@ func (e Exporter) sync() error {
 		return err
 	}
 
+	// TODO(refacor):
 	for i := range svcs {
 		if !svcs[i].HasServer(e.server) {
 			continue
