@@ -10,6 +10,7 @@ import (
 
 func TestConvertServer(t *testing.T) {
 	expected := discovery.NewServer("name", discovery.Labels{"key": "val"})
+	expected.IsEnabled = true
 	pb := ServerToPB(expected)
 	s := ServerFromPB(pb)
 

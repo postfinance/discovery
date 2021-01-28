@@ -122,6 +122,38 @@ func (r *Registry) ListServer(selector string) (discovery.Servers, error) {
 	return r.serverRepo.List(selector)
 }
 
+// SetServerStatus enables or disables a server.
+func (r *Registry) SetServerStatus(name string, enabled bool) error {
+	s, err := r.serverRepo.Get(name)
+	if err != nil {
+		return err
+	}
+
+	s.IsEnabled = enabled
+	s.Modified = time.Now()
+
+	if err := s.Validate(); err != nil {
+		return err
+	}
+
+	msg := "enable server"
+	if !enabled {
+		msg = "disable server"
+	}
+
+	r.log.Infow(msg, "name", name)
+
+	if _, err = r.serverRepo.Save(*s); err != nil {
+		return fmt.Errorf("failed to save server %s: %w", s.Name, err)
+	}
+
+	if _, err := r.ReRegisterAllServices(); err != nil {
+		return fmt.Errorf("failed to reregister all services: %w", err)
+	}
+
+	return nil
+}
+
 // RegisterService registers a service.
 func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, error) {
 	if err := s.Validate(); err != nil {
@@ -266,6 +298,7 @@ func (r *Registry) get(key string, numReplica int, selector string) (discovery.S
 		return nil, err
 	}
 
+	candidates = candidates.Enabled()
 	candidates.SortByName()
 
 	if numReplica > len(candidates) {

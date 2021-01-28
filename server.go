@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -9,18 +10,23 @@ import (
 )
 
 // Server represents a registered server.
+//
+// With kubernetes selectors it is possible to select a server by labels.
+// If IsActive is false, no services are distributed to this server.
 type Server struct {
-	Name     string    `json:"name"`
-	Labels   Labels    `json:"labels"`
-	Modified time.Time `json:"modified,omitempty"`
+	Name      string    `json:"name"`
+	Labels    Labels    `json:"labels"`
+	IsEnabled bool      `json:"enabled"`
+	Modified  time.Time `json:"modified,omitempty"`
 }
 
 // NewServer creates a new server instance.
 func NewServer(name string, l Labels) *Server {
 	return &Server{
-		Name:     name,
-		Labels:   l,
-		Modified: time.Now(),
+		Name:      name,
+		Labels:    l,
+		Modified:  time.Now(),
+		IsEnabled: true,
 	}
 }
 
@@ -48,6 +54,19 @@ func (s Servers) SortByDate() {
 	sort.Slice(s, func(i, j int) bool {
 		return s[j].Modified.Before(s[i].Modified)
 	})
+}
+
+// Enabled filters out disabled servers.
+func (s Servers) Enabled() Servers {
+	servers := make(Servers, 0, len(s))
+
+	for _, server := range s {
+		if server.IsEnabled {
+			servers = append(servers, server)
+		}
+	}
+
+	return servers
 }
 
 // Names returns the server names as slice of strings.
@@ -83,10 +102,10 @@ func ServersBySelector(selector labels.Selector) func(Server) bool {
 
 // Header creates the header for csv or table output.
 func (s Server) Header() []string {
-	return []string{"NAME", "MODIFIED", "LABELS"}
+	return []string{"NAME", "MODIFIED", "ENABLED", "LABELS"}
 }
 
 // Row creates a row for csv or table output.
 func (s Server) Row() []string {
-	return []string{s.Name, s.Modified.Format(time.RFC3339), s.Labels.String()}
+	return []string{s.Name, s.Modified.Format(time.RFC3339), fmt.Sprintf("%v", s.IsEnabled), s.Labels.String()}
 }
