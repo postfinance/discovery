@@ -21,7 +21,8 @@ import (
 
 // Common errors
 var (
-	ErrNotFound = errors.New("not found")
+	ErrNotFound         = errors.New("not found")
+	ErrContainsServices = errors.New("server has registered services")
 )
 
 // Registry registers server or service.
@@ -104,6 +105,19 @@ func (r *Registry) RegisterServer(name string, labels discovery.Labels) (*discov
 
 // UnRegisterServer unregisters a server.
 func (r *Registry) UnRegisterServer(name string) error {
+	allServices, err := r.ListService("", "")
+	if err != nil {
+		return err
+	}
+
+	for i := range allServices {
+		svc := allServices[i]
+
+		if svc.HasServer(name) {
+			return ErrContainsServices
+		}
+	}
+
 	r.log.Infow("unregister server", "name", name)
 
 	if err := r.serverRepo.Delete(name); err != nil {
