@@ -14,8 +14,6 @@ type serverCmd struct {
 	List       serverList       `cmd:"" help:"List registered servers."`
 	Register   serverRegister   `cmd:"" help:"Register a server."`
 	UnRegister serverUnRegister `cmd:""  name:"unregister" help:"Unregister a server."`
-	Enable     serverEnable     `cmd:""  name:"enable" help:"Enable a server."`
-	Disable    serverDisable    `cmd:""  name:"disable" help:"Disable a server."`
 }
 
 type serverList struct {
@@ -68,7 +66,6 @@ func (s serverRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) e
 	_, err = cli.RegisterServer(ctx, &discoveryv1.RegisterServerRequest{
 		Name:   s.Name,
 		Labels: s.Labels,
-		Status: discoveryv1.RegisterServerRequest_Undefined,
 	})
 
 	return err
@@ -89,44 +86,6 @@ func (s serverUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context)
 
 	_, err = cli.UnregisterServer(ctx, &discoveryv1.UnregisterServerRequest{
 		Name: s.Name,
-	})
-
-	return err
-}
-
-type serverEnable struct {
-	Name string `arg:"true" help:"Server name." required:"true"`
-}
-
-func (s serverEnable) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
-	return setServerStatus(true, s.Name, g)
-}
-
-type serverDisable struct {
-	Name string `arg:"true" help:"Server name." required:"true"`
-}
-
-func (s serverDisable) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
-	return setServerStatus(false, s.Name, g)
-}
-
-func setServerStatus(enabled bool, name string, g *Globals) error {
-	cli, err := g.serverClient()
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := g.ctx()
-	defer cancel()
-
-	status := discoveryv1.RegisterServerRequest_Disabled
-	if enabled {
-		status = discoveryv1.RegisterServerRequest_Enabled
-	}
-
-	_, err = cli.RegisterServer(ctx, &discoveryv1.RegisterServerRequest{
-		Name:   name,
-		Status: status,
 	})
 
 	return err

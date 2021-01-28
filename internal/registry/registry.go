@@ -85,19 +85,26 @@ func New(backend store.Backend, reg prometheus.Registerer, log *zap.SugaredLogge
 // RegisterServer registers a server.
 func (r *Registry) RegisterServer(name string, labels discovery.Labels) (*discovery.Server, error) {
 	s := discovery.NewServer(name, labels)
+
 	if err := s.Validate(); err != nil {
 		return nil, err
 	}
 
-	r.log.Infow("register server", "name", name)
-
-	ns, err := r.serverRepo.Save(*s)
+	_, err := r.serverRepo.Save(*s)
 	if err != nil {
-		return ns, fmt.Errorf("failed to save server %s: %w", s.Name, err)
+		return nil, fmt.Errorf("failed to save server %s: %w", s.Name, err)
 	}
 
 	if _, err := r.ReRegisterAllServices(); err != nil {
 		return nil, fmt.Errorf("failed to reregister all services: %w", err)
+	}
+
+	s.State = discovery.Active
+	r.log.Infow("register server", s.KeyVals()...)
+
+	ns, err := r.serverRepo.Save(*s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save server %s: %w", s.Name, err)
 	}
 
 	return ns, nil
@@ -105,27 +112,25 @@ func (r *Registry) RegisterServer(name string, labels discovery.Labels) (*discov
 
 // UnRegisterServer unregisters a server.
 func (r *Registry) UnRegisterServer(name string) error {
-	allServices, err := r.ListService("", "")
+	s, err := r.serverRepo.Get(name)
 	if err != nil {
 		return err
 	}
 
-	for i := range allServices {
-		svc := allServices[i]
+	s.State = discovery.Leaving
 
-		if svc.HasServer(name) {
-			return ErrContainsServices
-		}
+	if _, err := r.serverRepo.Save(*s); err != nil {
+		return err
 	}
 
 	r.log.Infow("unregister server", "name", name)
 
-	if err := r.serverRepo.Delete(name); err != nil {
-		return fmt.Errorf("failed to delete server %s: %w", name, err)
-	}
-
 	if _, err := r.ReRegisterAllServices(); err != nil {
 		return fmt.Errorf("failed to reregister all services: %w", err)
+	}
+
+	if err := r.serverRepo.Delete(name); err != nil {
+		return fmt.Errorf("failed to delete server %s: %w", name, err)
 	}
 
 	return nil
@@ -134,38 +139,6 @@ func (r *Registry) UnRegisterServer(name string) error {
 // ListServer lists servers by selector.
 func (r *Registry) ListServer(selector string) (discovery.Servers, error) {
 	return r.serverRepo.List(selector)
-}
-
-// SetServerStatus enables or disables a server.
-func (r *Registry) SetServerStatus(name string, enabled bool) error {
-	s, err := r.serverRepo.Get(name)
-	if err != nil {
-		return err
-	}
-
-	s.IsEnabled = enabled
-	s.Modified = time.Now()
-
-	if err := s.Validate(); err != nil {
-		return err
-	}
-
-	msg := "enable server"
-	if !enabled {
-		msg = "disable server"
-	}
-
-	r.log.Infow(msg, "name", name)
-
-	if _, err = r.serverRepo.Save(*s); err != nil {
-		return fmt.Errorf("failed to save server %s: %w", s.Name, err)
-	}
-
-	if _, err := r.ReRegisterAllServices(); err != nil {
-		return fmt.Errorf("failed to reregister all services: %w", err)
-	}
-
-	return nil
 }
 
 // RegisterService registers a service.
@@ -183,13 +156,6 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	servers, err := r.get(s.Endpoint.String(), r.numReplicas, s.Selector)
 	if err != nil {
 		return nil, err
-	}
-
-	old, _ := r.serviceRepo.Get(r.idGenerator(s.Endpoint.String()), s.Namespace) // we ignore errors, because this is only used to update metrics
-	if old != nil && s.ID == "" {
-		for i := range old.Servers {
-			r.servicesCount.WithLabelValues(old.Servers[i]).Dec() // if service already exists, we decrease its metrics value to handle redistributions
-		}
 	}
 
 	s.Servers = servers.Names()
@@ -303,6 +269,39 @@ func (r *Registry) UnRegisterNamespace(name string) error {
 
 	return nil
 }
+
+/*
+func (r *Registry) setServerStatus(enabled bool, name string) error {
+	s, err := r.serverRepo.Get(name)
+	if err != nil {
+		return err
+	}
+
+	if err := s.Validate(); err != nil {
+		return err
+	}
+
+	msg := "disable server"
+	if enabled {
+		msg = "enable server"
+	}
+
+	r.log.Infow(msg, "name", name)
+
+	s.Modified = time.Now()
+	s.IsEnabled = enabled
+
+	if _, err = r.serverRepo.Save(*s); err != nil {
+		return fmt.Errorf("failed to save server %s: %w", s.Name, err)
+	}
+
+	if _, err := r.ReRegisterAllServices(); err != nil {
+		return fmt.Errorf("failed to reregister all services: %w", err)
+	}
+
+	return nil
+}
+*/
 
 // get gets one or numReplica server for a key via consistent hasher. If numReplica is larger
 // than the number of servers, len(servers) is used.

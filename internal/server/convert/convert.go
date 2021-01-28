@@ -39,7 +39,7 @@ func ServerToPB(s *discovery.Server) *discoveryv1.Server {
 		Name:     s.Name,
 		Labels:   s.Labels,
 		Modified: timeToPB(&s.Modified),
-		Enabled:  s.IsEnabled,
+		State:    int64(s.State),
 	}
 
 	return pb
@@ -48,10 +48,10 @@ func ServerToPB(s *discovery.Server) *discoveryv1.Server {
 // ServerFromPB converts *discovery.Server to *discoveryv1.Server.
 func ServerFromPB(pb *discoveryv1.Server) *discovery.Server {
 	s := &discovery.Server{
-		Name:      pb.GetName(),
-		Labels:    pb.GetLabels(),
-		Modified:  timeFromPB(pb.Modified),
-		IsEnabled: pb.GetEnabled(),
+		Name:     pb.GetName(),
+		Labels:   pb.GetLabels(),
+		Modified: timeFromPB(pb.Modified),
+		State:    discovery.ServerState(pb.GetState()),
 	}
 
 	return s

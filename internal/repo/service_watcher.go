@@ -26,6 +26,7 @@ type ServiceEvent struct {
 }
 
 // Chan returns read-only channel of service events.
+//nolint: dupl // difficult to dedupl
 func (s *Service) Chan(ctx context.Context, errorHandler func(error)) <-chan *ServiceEvent {
 	if s.w != nil {
 		return s.w.c

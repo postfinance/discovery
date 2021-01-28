@@ -38,13 +38,6 @@ service ServerAPI {
 message RegisterServerRequest {
   string name = 1;
   map<string, string> labels = 2;
-  // you can disable and enable a server by setting status field.
-  enum Status {
-    Undefined = 0;
-    Enabled = 1;
-    Disabled = 2;
-  }
-  Status status = 3;
 }
 
 message RegisterServerResponse {

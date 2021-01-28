@@ -10,7 +10,7 @@ import (
 	"github.com/zbindenren/discovery"
 )
 
-func TestChan(t *testing.T) {
+func TestServiceChan(t *testing.T) {
 	c, err := hash.New()
 	require.NoError(t, err)
 

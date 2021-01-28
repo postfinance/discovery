@@ -49,11 +49,6 @@ func TestRegistry(t *testing.T) {
 		assert.Equal(t, []string{"server2", "server3"}, ns.Servers)
 	})
 
-	t.Run("unregister server that has registered services", func(t *testing.T) {
-		err := r.UnRegisterServer("server2")
-		assert.Equal(t, ErrContainsServices, err)
-	})
-
 	t.Run("register new server", func(t *testing.T) {
 		_, err = r.RegisterServer("server5", discovery.Labels{"env": "prod"})
 		require.NoError(t, err)

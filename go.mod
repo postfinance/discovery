@@ -19,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/zbindenren/king v0.0.2
 	github.com/zbindenren/sfmt v0.1.0
+	go.uber.org/atomic v1.6.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/mod v0.1.1-0.20191107180719-034126e5016b // indirect
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect

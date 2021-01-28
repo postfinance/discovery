@@ -18,6 +18,6 @@ message Server {
   map<string, string> labels = 2;
   // modified is the the time when the service is created or modified.
   google.protobuf.Timestamp modified = 3;
-  // enabled defines if the server accepts services or not.
-  bool enabled = 4;
+  // state defines the server state.
+  int64 state = 4;
 }

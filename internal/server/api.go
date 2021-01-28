@@ -19,22 +19,6 @@ type API struct {
 
 // RegisterServer registers a server.
 func (a *API) RegisterServer(_ context.Context, req *discoveryv1.RegisterServerRequest) (*discoveryv1.RegisterServerResponse, error) {
-	if req.Status != discoveryv1.RegisterServerRequest_Undefined {
-		enabled := false
-		msg := "disable"
-
-		if req.Status == discoveryv1.RegisterServerRequest_Enabled {
-			msg = "enable"
-			enabled = true
-		}
-
-		if err := a.r.SetServerStatus(req.GetName(), enabled); err != nil {
-			return nil, status.Errorf(codes.Internal, "could not %s server %s in store: %s", msg, req.GetName(), err)
-		}
-
-		return &discoveryv1.RegisterServerResponse{}, nil
-	}
-
 	s, err := a.r.RegisterServer(req.GetName(), req.GetLabels())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not register server %s in store: %s", req.GetName(), err)

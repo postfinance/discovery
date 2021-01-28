@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/postfinance/store"
@@ -21,6 +22,7 @@ var (
 type Server struct {
 	backend store.Backend
 	prefix  string
+	w       *serverWatcher
 }
 
 // NewServer creates a new server repo.
@@ -112,4 +114,19 @@ func (s *Server) List(selector string) (discovery.Servers, error) {
 
 func (s *Server) key(serverName string) string {
 	return path.Join(s.prefix, serverName)
+}
+
+func serverFromKey(key []byte) (*discovery.Server, error) {
+	k := string(key)
+	fields := strings.Split(k, "/")
+
+	if len(fields) < 2 {
+		return nil, fmt.Errorf("invalid service path: %s", k)
+	}
+
+	name := fields[len(fields)-1]
+
+	return &discovery.Server{
+		Name: name,
+	}, nil
 }

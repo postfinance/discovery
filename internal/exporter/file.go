@@ -191,8 +191,6 @@ func (f *files) writeFile(destDir string, file *file) error {
 
 	// check for pending changes
 	if hash == file.hash {
-		f.log.Debugw("discovery file already up-to-date", "path", p)
-
 		return nil
 	}
 

@@ -2,11 +2,24 @@ package discovery
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"time"
 
 	"k8s.io/apimachinery/pkg/labels"
+)
+
+// ServerState describes the server state.
+type ServerState int
+
+// All possible export states:
+//
+// Leaving: server was unregistered and is leaving
+// Joining: server was registered and is ready for services
+// Active: server already has services configured
+const (
+	Leaving ServerState = iota // leaving
+	Joining                    // joining
+	Active                     // active
 )
 
 // Server represents a registered server.
@@ -14,19 +27,19 @@ import (
 // With kubernetes selectors it is possible to select a server by labels.
 // If IsActive is false, no services are distributed to this server.
 type Server struct {
-	Name      string    `json:"name"`
-	Labels    Labels    `json:"labels"`
-	IsEnabled bool      `json:"enabled"`
-	Modified  time.Time `json:"modified,omitempty"`
+	Name     string      `json:"name"`
+	Labels   Labels      `json:"labels"`
+	State    ServerState `json:"state"`
+	Modified time.Time   `json:"modified,omitempty"`
 }
 
 // NewServer creates a new server instance.
 func NewServer(name string, l Labels) *Server {
 	return &Server{
-		Name:      name,
-		Labels:    l,
-		Modified:  time.Now(),
-		IsEnabled: true,
+		Name:     name,
+		Labels:   l,
+		Modified: time.Now(),
+		State:    Joining,
 	}
 }
 
@@ -56,12 +69,12 @@ func (s Servers) SortByDate() {
 	})
 }
 
-// Enabled filters out disabled servers.
+// Enabled returns all active and joining servers.
 func (s Servers) Enabled() Servers {
 	servers := make(Servers, 0, len(s))
 
 	for _, server := range s {
-		if server.IsEnabled {
+		if server.State != Leaving {
 			servers = append(servers, server)
 		}
 	}
@@ -102,10 +115,20 @@ func ServersBySelector(selector labels.Selector) func(Server) bool {
 
 // Header creates the header for csv or table output.
 func (s Server) Header() []string {
-	return []string{"NAME", "MODIFIED", "ENABLED", "LABELS"}
+	return []string{"NAME", "MODIFIED", "STATE", "LABELS"}
 }
 
 // Row creates a row for csv or table output.
 func (s Server) Row() []string {
-	return []string{s.Name, s.Modified.Format(time.RFC3339), fmt.Sprintf("%v", s.IsEnabled), s.Labels.String()}
+	return []string{s.Name, s.Modified.Format(time.RFC3339), s.State.String(), s.Labels.String()}
+}
+
+// KeyVals represents the service as slice of interface.
+func (s Server) KeyVals() []interface{} {
+	return []interface{}{
+		"name", s.Name,
+		"modified", s.Modified,
+		"labels", s.Labels.String(),
+		"state", s.State.String(),
+	}
 }

@@ -18,6 +18,14 @@ import (
 	"github.com/zbindenren/discovery/internal/repo"
 )
 
+func TestEnableDisableWatch(t *testing.T) {
+	e := Exporter{}
+	e.disableWatch()
+	assert.True(t, e.isWatchDisabled())
+	e.enableWatch()
+	assert.False(t, e.isWatchDisabled())
+}
+
 func TestExporter(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "discovery")
 	assert.NoError(t, err)
@@ -137,6 +145,7 @@ func (s *serviceRepoMock) Chan(context.Context, func(error)) <-chan *repo.Servic
 
 type serverRepoMock struct {
 	servers map[string]*discovery.Server
+	ch      chan *repo.ServerEvent
 }
 
 func (s *serverRepoMock) Get(serverName string) (*discovery.Server, error) {
@@ -146,6 +155,10 @@ func (s *serverRepoMock) Get(serverName string) (*discovery.Server, error) {
 	}
 
 	return server, nil
+}
+
+func (s *serverRepoMock) Chan(context.Context, func(error)) <-chan *repo.ServerEvent {
+	return s.ch
 }
 
 func newServerMock() *serverRepoMock {

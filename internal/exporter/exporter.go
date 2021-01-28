@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pkg/errors"
@@ -22,12 +23,13 @@ const (
 // Exporter writes services from store to filesystem for prometheus
 // file based service discovery.
 type Exporter struct {
-	serviceRepo  serviceChanLister
-	serverRepo   serverGetter
-	log          *zap.SugaredLogger
-	destDir      string
-	server       string
-	destinations files
+	serviceRepo          serviceChanLister
+	serverRepo           serverChanGetter
+	log                  *zap.SugaredLogger
+	destDir              string
+	server               string
+	destinations         files
+	serviceWatchDisabled int32
 }
 
 // New creates a new exporter.
@@ -57,6 +59,7 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 		return err
 	}
 
+	e.enableWatch()
 	e.server = server
 
 	if err := os.MkdirAll(filepath.Join(e.destDir, server), dirPermissions); err != nil {
@@ -66,10 +69,11 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 	errHandler := func(err error) {
 		e.log.Fatalw("failed to create watcher", "err", err)
 	}
-	events := e.serviceRepo.Chan(ctx, errHandler)
+	serviceEvents := e.serviceRepo.Chan(ctx, errHandler)
+	serverEvents := e.serverRepo.Chan(ctx, errHandler)
 	ticker := time.NewTicker(reSyncInterval)
 
-	e.log.Info("sync all services")
+	e.log.Info("sync services")
 
 	if err := e.sync(); err != nil {
 		return err
@@ -77,14 +81,25 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 
 	for {
 		select {
-		case se, ok := <-events:
+		case se, ok := <-serverEvents:
 			if !ok {
 				e.log.Infow("stopping exporter")
 
 				return nil
 			}
 
-			e.handle(se)
+			msg := append([]interface{}{"type", se.Event.String()}, se.Server.KeyVals()...)
+			e.log.Infow("server event", msg...)
+
+			e.handleServer(se)
+		case se, ok := <-serviceEvents:
+			if !ok {
+				e.log.Infow("stopping exporter")
+
+				return nil
+			}
+
+			e.handleService(se)
 		case <-ctx.Done():
 			e.log.Infow("stopping exporter")
 
@@ -100,12 +115,17 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 	}
 }
 
-func (e Exporter) handle(event *repo.ServiceEvent) {
+func (e *Exporter) handleService(event *repo.ServiceEvent) {
 	ignore := !event.Service.HasServer(e.server)
 	msg := append([]interface{}{
 		"event", event.Event.String(),
 		"ignore", ignore,
 	}, event.Service.KeyVals()...)
+
+	if e.isWatchDisabled() {
+		e.log.Debug("watch disabled")
+		return
+	}
 
 	e.log.Debugw("service event", msg...)
 
@@ -140,11 +160,63 @@ func (e Exporter) handle(event *repo.ServiceEvent) {
 	}
 }
 
-func (e Exporter) directory() string {
+// before deleting or adding a server, the registry disables it. This
+// gives us the chance to disable service whatch.
+func (e *Exporter) handleServer(event *repo.ServerEvent) {
+	switch event.Event {
+	case repo.Change:
+		if event.Server.State == discovery.Leaving || event.Server.State == discovery.Joining {
+			e.log.Debugw("disabling service watcher")
+			e.disableWatch()
+
+			return
+		}
+
+		if event.Server.State == discovery.Active {
+			e.log.Debug("sync services")
+
+			e.destinations.reset()
+
+			if err := e.sync(); err != nil {
+				e.log.Errorw("sync failed", "err", err)
+			}
+
+			e.log.Debugw("enabling service watcher")
+			e.enableWatch()
+		}
+	case repo.Delete:
+		e.log.Debug("sync services")
+
+		e.destinations.reset()
+
+		if err := e.sync(); err != nil {
+			e.log.Errorw("sync failed", "err", err)
+		}
+
+		e.log.Debugw("enabling service watcher")
+		e.enableWatch()
+	default:
+		e.log.Errorw("unsupported event", "event", event.Event)
+	}
+}
+
+func (e *Exporter) directory() string {
 	return filepath.Join(e.destDir, e.server)
 }
 
-func (e Exporter) sync() error {
+func (e *Exporter) isWatchDisabled() bool {
+	return atomic.LoadInt32(&e.serviceWatchDisabled) == 1
+}
+
+func (e *Exporter) disableWatch() {
+	atomic.StoreInt32(&e.serviceWatchDisabled, 1)
+}
+
+func (e *Exporter) enableWatch() {
+	atomic.StoreInt32(&e.serviceWatchDisabled, 0)
+}
+
+func (e *Exporter) sync() error {
 	svcs, err := e.serviceRepo.List("", "")
 	if err != nil {
 		return err
@@ -173,8 +245,9 @@ type serviceChanLister interface {
 	Chan(context.Context, func(error)) <-chan *repo.ServiceEvent
 }
 
-type serverGetter interface {
+type serverChanGetter interface {
 	Get(serverName string) (*discovery.Server, error)
+	Chan(context.Context, func(error)) <-chan *repo.ServerEvent
 }
 
 type namespaceGetter interface {
