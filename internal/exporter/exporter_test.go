@@ -185,6 +185,7 @@ func newNamespaceMock() *namespaceRepoMock {
 func newService(id, name, endpoint string) discovery.Service {
 	s := *discovery.MustNewService(name, endpoint)
 	s.ID = id
+	s.Servers = []string{"server1"}
 
 	return s
 }
