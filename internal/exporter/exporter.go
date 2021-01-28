@@ -146,6 +146,10 @@ func (e Exporter) sync() error {
 	}
 
 	for i := range svcs {
+		if !svcs[i].HasServer(e.server) {
+			continue
+		}
+
 		if err := e.destinations.addService(&svcs[i]); err != nil {
 			return err
 		}

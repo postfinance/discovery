@@ -87,6 +87,17 @@ func (s Service) Validate() error {
 	return nil
 }
 
+// HasServer returns true if service has serverName in its Servers slice.
+func (s Service) HasServer(serverName string) bool {
+	for _, name := range s.Servers {
+		if name == serverName {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Header creates the header for csv or table output.
 func (s Service) Header() []string {
 	return []string{"NAME", "NAMESPACE", "ID", "ENDPOINT", "SERVERS", "LABELS", "SELECTOR", "MODIFIED", "DESCRIPTION"}
