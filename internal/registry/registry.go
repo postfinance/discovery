@@ -158,7 +158,13 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 		}
 	}
 
-	r.log.Infow("register service", s.KeyVals()...)
+	msg := "register service"
+
+	if s.ID != "" {
+		msg = "updating service"
+	}
+
+	r.log.Infow(msg, s.KeyVals()...)
 
 	servers, err := r.get(s.Endpoint.String(), r.numReplicas, s.Selector)
 	if err != nil {

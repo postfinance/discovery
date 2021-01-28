@@ -122,12 +122,12 @@ func (f *files) addService(s *discovery.Service) error {
 
 	svc := service{*s}
 
-	ns, err := f.namespaceGetter.Get(svc.Namespace)
-	if err != nil {
-		return err
-	}
-
 	if _, ok := f.files[svc.key()]; !ok {
+		ns, err := f.namespaceGetter.Get(svc.Namespace)
+		if err != nil {
+			return err
+		}
+
 		f.files[svc.key()] = &file{
 			services:  services{},
 			job:       svc.Name,

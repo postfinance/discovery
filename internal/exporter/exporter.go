@@ -222,7 +222,6 @@ func (e *Exporter) sync() error {
 		return err
 	}
 
-	// TODO(refacor):
 	for i := range svcs {
 		if !svcs[i].HasServer(e.server) {
 			continue
