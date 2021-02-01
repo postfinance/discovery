@@ -150,12 +150,6 @@ func (s *Server) startGRPC() error {
 		}
 	}
 
-	s.l.Infow("recalculating services")
-
-	if _, err := r.ReRegisterAllServices(); err != nil {
-		return err
-	}
-
 	a := &API{
 		r: r,
 	}

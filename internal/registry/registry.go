@@ -69,6 +69,10 @@ func New(backend store.Backend, reg prometheus.Registerer, log *zap.SugaredLogge
 		},
 	}
 
+	if err := registry.initializeServiceMetrics(); err != nil {
+		log.Errorw("failed to initialize service metrics", "err", err)
+	}
+
 	// initialize cache
 	namespaces, err := registry.namespaceRepo.List()
 	if err != nil {
@@ -283,38 +287,20 @@ func (r *Registry) UnRegisterNamespace(name string) error {
 	return nil
 }
 
-/*
-func (r *Registry) setServerStatus(enabled bool, name string) error {
-	s, err := r.serverRepo.Get(name)
+func (r *Registry) initializeServiceMetrics() error {
+	services, err := r.serviceRepo.List("", "")
 	if err != nil {
 		return err
 	}
 
-	if err := s.Validate(); err != nil {
-		return err
-	}
-
-	msg := "disable server"
-	if enabled {
-		msg = "enable server"
-	}
-
-	r.log.Infow(msg, "name", name)
-
-	s.Modified = time.Now()
-	s.IsEnabled = enabled
-
-	if _, err = r.serverRepo.Save(*s); err != nil {
-		return fmt.Errorf("failed to save server %s: %w", s.Name, err)
-	}
-
-	if _, err := r.ReRegisterAllServices(); err != nil {
-		return fmt.Errorf("failed to reregister all services: %w", err)
+	for i := range services {
+		for _, server := range services[i].Servers {
+			r.servicesCount.WithLabelValues(server).Inc()
+		}
 	}
 
 	return nil
 }
-*/
 
 // get gets one or numReplica server for a key via consistent hasher. If numReplica is larger
 // than the number of servers, len(servers) is used.
