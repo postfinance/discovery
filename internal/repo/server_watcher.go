@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store"
-	"github.com/zbindenren/discovery"
 )
 
 // ServerEvent contains the server and the event (change or delete).

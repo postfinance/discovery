@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store"
-	"github.com/zbindenren/discovery"
 )
 
 // Event represents a repo event. The possible valid values are Change and Delete.

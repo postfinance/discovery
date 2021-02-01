@@ -14,8 +14,8 @@ import (
 	"github.com/postfinance/flash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zbindenren/discovery"
-	"github.com/zbindenren/discovery/internal/repo"
+	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/repo"
 )
 
 func TestEnableDisableWatch(t *testing.T) {

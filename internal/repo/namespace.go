@@ -6,8 +6,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store"
-	"github.com/zbindenren/discovery"
 )
 
 // Namespace represents the server repository.

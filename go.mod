@@ -1,4 +1,4 @@
-module github.com/zbindenren/discovery
+module github.com/postfinance/discovery
 
 go 1.15
 

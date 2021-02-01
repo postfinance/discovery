@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/hash"
+	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/store"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/zbindenren/discovery"
-	"github.com/zbindenren/discovery/internal/hash"
-	"github.com/zbindenren/discovery/internal/repo"
 	"go.uber.org/zap"
 )
 

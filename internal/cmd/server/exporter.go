@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery/internal/exporter"
 	"github.com/postfinance/single"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/zbindenren/discovery/internal/exporter"
 	"github.com/zbindenren/king"
 	"go.uber.org/zap"
 )

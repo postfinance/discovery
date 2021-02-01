@@ -11,7 +11,7 @@ import (
 	"sync"
 
 	"github.com/google/renameio"
-	"github.com/zbindenren/discovery"
+	"github.com/postfinance/discovery"
 	"go.uber.org/zap"
 )
 

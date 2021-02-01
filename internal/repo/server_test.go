@@ -6,7 +6,7 @@ import (
 	"github.com/postfinance/store/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zbindenren/discovery"
+	"github.com/postfinance/discovery"
 )
 
 func TestServer(t *testing.T) {

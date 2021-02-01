@@ -4,8 +4,8 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery/internal/cmd/server"
 	"github.com/postfinance/flash"
-	"github.com/zbindenren/discovery/internal/cmd/server"
 	"github.com/zbindenren/king"
 )
 

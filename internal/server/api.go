@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/zbindenren/discovery"
-	"github.com/zbindenren/discovery/internal/registry"
-	"github.com/zbindenren/discovery/internal/server/convert"
-	discoveryv1 "github.com/zbindenren/discovery/pkg/discoverypb"
+	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/registry"
+	"github.com/postfinance/discovery/internal/server/convert"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

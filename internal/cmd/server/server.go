@@ -9,8 +9,8 @@ import (
 	"syscall"
 
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/zbindenren/discovery/internal/server"
 	"github.com/zbindenren/king"
 	"go.uber.org/zap"
 )

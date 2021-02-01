@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store"
 	uuid "github.com/satori/go.uuid"
-	"github.com/zbindenren/discovery"
 	"k8s.io/apimachinery/pkg/labels"
 )
 

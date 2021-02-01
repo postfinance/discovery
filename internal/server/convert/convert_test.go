@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zbindenren/discovery"
+	"github.com/postfinance/discovery"
 )
 
 func TestConvertServer(t *testing.T) {

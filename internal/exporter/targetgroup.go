@@ -3,7 +3,7 @@ package exporter
 import (
 	"strings"
 
-	"github.com/zbindenren/discovery"
+	"github.com/postfinance/discovery"
 )
 
 // targetGroup represents a prometheus target group.

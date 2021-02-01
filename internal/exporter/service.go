@@ -3,7 +3,7 @@ package exporter
 import (
 	"sort"
 
-	"github.com/zbindenren/discovery"
+	"github.com/postfinance/discovery"
 )
 
 type service struct {

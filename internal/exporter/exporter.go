@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/store"
-	"github.com/zbindenren/discovery"
-	"github.com/zbindenren/discovery/internal/repo"
 	"go.uber.org/zap"
 )
 

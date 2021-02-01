@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/alecthomas/kong"
-	"github.com/zbindenren/discovery"
-	discoveryv1 "github.com/zbindenren/discovery/pkg/discoverypb"
+	"github.com/postfinance/discovery"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )

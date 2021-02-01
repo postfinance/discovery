@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store"
-	"github.com/zbindenren/discovery"
 	"k8s.io/apimachinery/pkg/labels"
 )
 

@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"time"
 
-	discoveryv1 "github.com/zbindenren/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"github.com/zbindenren/king"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

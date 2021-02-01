@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery/internal/cmd/client"
 	"github.com/postfinance/flash"
-	"github.com/zbindenren/discovery/internal/cmd/client"
 	"github.com/zbindenren/king"
 )
 
