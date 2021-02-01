@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
 
@@ -157,6 +158,9 @@ func (s *Server) startGRPC() error {
 	discoveryv1.RegisterServerAPIServer(s.grpc.server, a)
 	discoveryv1.RegisterServiceAPIServer(s.grpc.server, a)
 	discoveryv1.RegisterNamespaceAPIServer(s.grpc.server, a)
+
+	// grpc reflection support
+	reflection.Register(s.grpc.server)
 
 	listener, err := net.Listen("tcp", s.grpc.listenAddr)
 
