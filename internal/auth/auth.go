@@ -92,7 +92,7 @@ func Func(verifier Verifier, th *TokenHandler, l *zap.SugaredLogger) func(ctx co
 // UnaryAuthorizeInterceptor authorizes GRPC requests.
 func UnaryAuthorizeInterceptor(rwRoles ...string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		if err := authorizeUser(ctx, info.FullMethod, rwRoles...); err != nil {
+		if err := authorizeUser(ctx, rwRoles...); err != nil {
 			return nil, err
 		}
 
@@ -122,7 +122,7 @@ func StreamMethodNameInterceptor() grpc.StreamServerInterceptor {
 // StreamAuthorizeInterceptor authorizes GRPC streams.
 func StreamAuthorizeInterceptor(rwRoles ...string) grpc.StreamServerInterceptor {
 	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		if err := authorizeUser(stream.Context(), info.FullMethod, rwRoles...); err != nil {
+		if err := authorizeUser(stream.Context(), rwRoles...); err != nil {
 			return err
 		}
 
@@ -131,8 +131,9 @@ func StreamAuthorizeInterceptor(rwRoles ...string) grpc.StreamServerInterceptor 
 }
 
 //nolint: gocyclo // maybe move rules to other function
-func authorizeUser(ctx context.Context, fullMethod string, rwRoles ...string) error {
-	if strings.HasPrefix(methodNameFromContext(ctx), "/grpc.reflection") {
+func authorizeUser(ctx context.Context, rwRoles ...string) error {
+	fullMethod := methodNameFromContext(ctx)
+	if strings.HasPrefix(fullMethod, "/grpc.reflection") {
 		return nil
 	}
 
@@ -141,24 +142,25 @@ func authorizeUser(ctx context.Context, fullMethod string, rwRoles ...string) er
 		return status.Errorf(codes.Unauthenticated, "unauthententicated user")
 	}
 
+	// following methods are only allowed when use has one of rwRoles.
 	switch fullMethod {
-	case "postfinance.discovery.v1.NamespaceAPI.RegisterNamespace":
+	case "/postfinance.discovery.v1.NamespaceAPI/RegisterNamespace":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {
 			return status.Errorf(codes.PermissionDenied, "%s token for %s is not allowed to register a namespace", u.Kind.String(), u.Username)
 		}
-	case "postfinance.discovery.v1.NamespaceAPI.UnregisterNamespace":
+	case "/postfinance.discovery.v1.NamespaceAPI/UnregisterNamespace":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {
 			return status.Errorf(codes.PermissionDenied, "%s token for %s is not allowed to unregister a namespace", u.Kind.String(), u.Username)
 		}
-	case "postfinance.discovery.v1.ServerAPI.RegisterServer":
+	case "/postfinance.discovery.v1.ServerAPI/RegisterServer":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {
 			return status.Errorf(codes.PermissionDenied, "%s token for %s is not allowed to register a server", u.Kind.String(), u.Username)
 		}
-	case "postfinance.discovery.v1.ServerAPI.UnregisterServer":
+	case "/postfinance.discovery.v1.ServerAPI/UnregisterServer":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {
 			return status.Errorf(codes.PermissionDenied, "%s token for %s is not allowed to unregister a server", u.Kind.String(), u.Username)
 		}
-	case "postfinance.discovery.v1.TokenAPI.Create":
+	case "/postfinance.discovery.v1.TokenAPI/Create":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {
 			return status.Errorf(codes.PermissionDenied, "%s token for %s is not allowed to create a token", u.Kind.String(), u.Username)
 		}

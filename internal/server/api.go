@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/postfinance/discovery"
@@ -53,7 +54,11 @@ func (a *API) ListServer(_ context.Context, _ *discoveryv1.ListServerRequest) (*
 }
 
 // RegisterService registers a service.
-func (a *API) RegisterService(_ context.Context, req *discoveryv1.RegisterServiceRequest) (*discoveryv1.RegisterServiceResponse, error) {
+func (a *API) RegisterService(ctx context.Context, req *discoveryv1.RegisterServiceRequest) (*discoveryv1.RegisterServiceResponse, error) {
+	if err := verifyUser(ctx, req.GetNamespace()); err != nil {
+		return nil, err
+	}
+
 	s, err := discovery.NewService(req.GetName(), req.GetEndpoint())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "service with endpoint %s is invalid: %s", req.GetEndpoint(), err)
@@ -78,7 +83,11 @@ func (a *API) RegisterService(_ context.Context, req *discoveryv1.RegisterServic
 }
 
 // UnRegisterService unregisters a service.
-func (a *API) UnRegisterService(_ context.Context, req *discoveryv1.UnRegisterServiceRequest) (*discoveryv1.UnRegisterServiceResponse, error) {
+func (a *API) UnRegisterService(ctx context.Context, req *discoveryv1.UnRegisterServiceRequest) (*discoveryv1.UnRegisterServiceResponse, error) {
+	if err := verifyUser(ctx, req.GetNamespace()); err != nil {
+		return nil, err
+	}
+
 	if err := a.r.UnRegisterService(req.GetId(), req.GetNamespace()); err != nil {
 		return nil, status.Errorf(codes.Internal, "could not unregister service %s in namespace %s: %s", req.GetId(), req.GetNamespace(), err)
 	}
@@ -173,4 +182,17 @@ func (a *API) Info(_ context.Context, in *discoveryv1.InfoRequest) (*discoveryv1
 			ExpiresAt:  convert.TimeToPB(&u.ExpiresAt),
 		},
 	}, nil
+}
+
+func verifyUser(ctx context.Context, namespace string) error {
+	u, ok := auth.UserFromContext(ctx)
+	if !ok {
+		return status.Errorf(codes.Unauthenticated, "unauthententicated user")
+	}
+
+	if u.IsMachine() && !u.HasNamespace(namespace) {
+		return status.Errorf(codes.PermissionDenied, "machine token %s (%s) is not allowed to change service in %s namespace", u.Username, strings.Join(u.Namespaces, ","), namespace)
+	}
+
+	return nil
 }
