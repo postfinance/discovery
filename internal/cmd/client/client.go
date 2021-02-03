@@ -39,7 +39,7 @@ type Globals struct {
 	Insecure     bool             `help:"use insecure connection without tls."`
 	ShowConfig   king.ShowConfig  `help:"Show used config files"`
 	Version      king.VersionFlag `help:"Show version information"`
-	TokenPath    string           `help:"Authentication token" default:"~/.config/lslb/.token"`
+	TokenPath    string           `help:"Authentication token" default:"~/.config/discovery/.token"`
 	OIDCEndpoint string           `help:"OIDC endpoint URL." required:"true"`
 	OIDCClientID string           `help:"OIDC client ID." required:"true"`
 }
