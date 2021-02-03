@@ -11,10 +11,12 @@ import (
 	"time"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"github.com/postfinance/store"
@@ -33,29 +35,34 @@ const (
 
 // Server represents the discovery server.
 type Server struct {
-	wg          *sync.WaitGroup
-	numReplicas int
-	backend     store.Backend
-	reg         prometheus.Registerer
-	l           *zap.SugaredLogger
-	grpc        grpcConfig
-	http        httpConfig
+	wg         *sync.WaitGroup
+	backend    store.Backend
+	l          *zap.SugaredLogger
+	config     Config
+	grpcServer *grpc.Server
+	httpServer *http.Server
+}
+
+// Config configures the discovery server.
+type Config struct {
+	PrometheusRegistry prometheus.Registerer
+	NumReplicas        int
+	GRPCListenAddr     string
+	HTTPListenAddr     string
+	TokenIssuer        string
+	TokenSecretKey     string
+	OIDCClient         string
+	OIDCRoles          []string
+	OIDCURL            string
 }
 
 // New initializes a new Server.
-func New(backend store.Backend, l *zap.SugaredLogger, reg prometheus.Registerer, numReplicas int, grpcListen, httpListen string) (*Server, error) {
+func New(backend store.Backend, l *zap.SugaredLogger, cfg Config) (*Server, error) {
 	s := Server{
-		numReplicas: numReplicas,
-		backend:     backend,
-		reg:         reg,
-		l:           l,
-		wg:          &sync.WaitGroup{},
-		grpc: grpcConfig{
-			listenAddr: grpcListen,
-		},
-		http: httpConfig{
-			listenAddr: httpListen,
-		},
+		backend: backend,
+		l:       l,
+		wg:      &sync.WaitGroup{},
+		config:  cfg,
 	}
 
 	return &s, nil
@@ -106,32 +113,45 @@ func (s *Server) startGRPC() error {
 		grpc_recovery.WithRecoveryHandler(panicHandler),
 	}
 
-	s.grpc.server = grpc.NewServer(
+	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
+
+	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, 10*time.Second)
+	if err != nil {
+		return err
+	}
+
+	s.grpcServer = grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_recovery.StreamServerInterceptor(opts...),
 			grpcMetrics.StreamServerInterceptor(),
+			auth.StreamMethodNameInterceptor(),
+			grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
+			auth.StreamAuthorizeInterceptor(s.config.OIDCRoles...),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(opts...),
 			grpcMetrics.UnaryServerInterceptor(),
+			auth.UnaryMethodNameInterceptor(),
+			grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
+			auth.UnaryAuthorizeInterceptor(s.config.OIDCRoles...),
 		)),
 	)
 
-	if err := s.reg.Register(grpcMetrics); err != nil {
+	if err := s.config.PrometheusRegistry.Register(grpcMetrics); err != nil {
 		return err
 	}
 
-	if err := s.reg.Register(prometheus.NewGaugeFunc(
+	if err := s.config.PrometheusRegistry.Register(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "discovery_replication_factor",
 			Help: "A metric with with constant value showing the configured replication factor.",
 		},
-		func() float64 { return float64(s.numReplicas) },
+		func() float64 { return float64(s.config.NumReplicas) },
 	)); err != nil {
 		return err
 	}
 
-	r, err := registry.New(s.backend, s.reg, s.l, s.numReplicas)
+	r, err := registry.New(s.backend, s.config.PrometheusRegistry, s.l, s.config.NumReplicas)
 	if err != nil {
 		return err
 	}
@@ -152,23 +172,25 @@ func (s *Server) startGRPC() error {
 	}
 
 	a := &API{
-		r: r,
+		r:            r,
+		tokenHandler: tokenHandler,
 	}
 
-	discoveryv1.RegisterServerAPIServer(s.grpc.server, a)
-	discoveryv1.RegisterServiceAPIServer(s.grpc.server, a)
-	discoveryv1.RegisterNamespaceAPIServer(s.grpc.server, a)
+	discoveryv1.RegisterServerAPIServer(s.grpcServer, a)
+	discoveryv1.RegisterServiceAPIServer(s.grpcServer, a)
+	discoveryv1.RegisterNamespaceAPIServer(s.grpcServer, a)
+	discoveryv1.RegisterTokenAPIServer(s.grpcServer, a)
 
 	// grpc reflection support
-	reflection.Register(s.grpc.server)
+	reflection.Register(s.grpcServer)
 
-	listener, err := net.Listen("tcp", s.grpc.listenAddr)
+	listener, err := net.Listen("tcp", s.config.GRPCListenAddr)
 
 	if err != nil {
 		return err
 	}
 
-	if err := s.grpc.server.Serve(listener); err != nil {
+	if err := s.grpcServer.Serve(listener); err != nil {
 		return err
 	}
 
@@ -178,7 +200,7 @@ func (s *Server) startGRPC() error {
 func (s *Server) startHTTP(ctx context.Context) error {
 	s.l.Infow("starting http server")
 
-	ep, err := getGRPCEndpointFromListenAddr(s.grpc.listenAddr)
+	ep, err := getGRPCEndpointFromListenAddr(s.config.GRPCListenAddr)
 	if err != nil {
 		return err
 	}
@@ -197,7 +219,7 @@ func (s *Server) startHTTP(ctx context.Context) error {
 
 	mux := http.NewServeMux()
 
-	r, ok := s.reg.(prometheus.Gatherer)
+	r, ok := s.config.PrometheusRegistry.(prometheus.Gatherer)
 	if !ok {
 		panic("interface is not prometheus.Registry")
 	}
@@ -205,12 +227,12 @@ func (s *Server) startHTTP(ctx context.Context) error {
 	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	mux.Handle("/", gwmux)
 
-	s.http.server = &http.Server{
-		Addr:    s.http.listenAddr,
+	s.httpServer = &http.Server{
+		Addr:    s.config.HTTPListenAddr,
 		Handler: mux,
 	}
 
-	if err := s.http.server.ListenAndServe(); err != http.ErrServerClosed {
+	if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
 		return err
 	}
 
@@ -243,35 +265,25 @@ func (s *Server) stopGRPC() {
 	}()
 	defer s.l.Infow("grpc server stopped")
 
-	if s.grpc.server == nil {
+	if s.grpcServer == nil {
 		return
 	}
 
-	s.grpc.server.GracefulStop()
+	s.grpcServer.GracefulStop()
 }
 
 func (s *Server) stopHTTP() error {
 	defer s.wg.Done()
 	defer s.l.Info("http server stopped")
 
-	if s.http.server == nil {
+	if s.httpServer == nil {
 		return nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), httpStopTimeout)
 	defer cancel()
 
-	return s.http.server.Shutdown(ctx)
-}
-
-type grpcConfig struct {
-	server     *grpc.Server
-	listenAddr string
-}
-
-type httpConfig struct {
-	server     *http.Server
-	listenAddr string
+	return s.httpServer.Shutdown(ctx)
 }
 
 func getGRPCEndpointFromListenAddr(grpcep string) (string, error) {

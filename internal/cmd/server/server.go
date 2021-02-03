@@ -23,18 +23,23 @@ type CLI struct {
 }
 
 type serverCmd struct {
-	GRPCListen string `short:"l" help:"GRPC gateway listen adddress" default:"localhost:3001"`
-	HTTPListen string `help:"HTTP listen adddress" default:"localhost:3002"`
-	Replicas   int    `help:"The number of service replicas." default:"1"`
+	GRPCListen   string   `short:"l" help:"GRPC gateway listen adddress" default:"localhost:3001"`
+	HTTPListen   string   `help:"HTTP listen adddress" default:"localhost:3002"`
+	Replicas     int      `help:"The number of service replicas." default:"1"`
+	TokenIssuer  string   `help:"The jwt token issuer name. If you change this, alle issued tokens are invalid." default:"discovery.postfinance.ch"`
+	TokenSecret  string   `help:"The secret key to issue jwt machine tokens. If you change this, alle issued tokens are invalid." required:"true"`
+	OIDCEndpoint string   `help:"OIDC endpoint URL." required:"true"`
+	OIDCClientID string   `help:"OIDC client ID." required:"true"`
+	OIDCRoles    []string `help:"The the roles that are allowed to change member state." required:"true"`
 }
 
 func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) error {
-	reg := prometheus.NewRegistry()
+	config := s.config()
 
 	l.Infow("starting grpc server",
 		king.FlagMap(app, regexp.MustCompile("key"), regexp.MustCompile("password"), regexp.MustCompile("secret")).
 			Rm("help", "env-help", "version").
-			Register(app.Model.Name, reg).
+			Register(app.Model.Name, config.PrometheusRegistry).
 			List()...)
 
 	b, err := g.backend()
@@ -46,15 +51,29 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) erro
 		l.Infow("stopping server", "signal", s.String())
 	}, syscall.SIGINT, syscall.SIGTERM)
 
-	reg.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
-	reg.MustRegister(prometheus.NewGoCollector())
+	config.PrometheusRegistry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	config.PrometheusRegistry.MustRegister(prometheus.NewGoCollector())
 
-	srv, err := server.New(b, l, reg, s.Replicas, s.GRPCListen, s.HTTPListen)
+	srv, err := server.New(b, l, config)
 	if err != nil {
 		return err
 	}
 
 	return srv.Run(ctx)
+}
+
+func (s serverCmd) config() server.Config {
+	return server.Config{
+		PrometheusRegistry: prometheus.NewRegistry(),
+		NumReplicas:        s.Replicas,
+		GRPCListenAddr:     s.GRPCListen,
+		HTTPListenAddr:     s.HTTPListen,
+		TokenIssuer:        s.TokenIssuer,
+		TokenSecretKey:     s.TokenSecret,
+		OIDCClient:         s.OIDCClientID,
+		OIDCRoles:          s.OIDCRoles,
+		OIDCURL:            s.OIDCEndpoint,
+	}
 }
 
 func contextWithSignal(ctx context.Context, f func(s os.Signal), s ...os.Signal) context.Context {

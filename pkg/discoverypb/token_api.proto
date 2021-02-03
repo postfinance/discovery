@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "TokenApiProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "tokeninfo.proto";
+import "google/api/annotations.proto";
+
+// TokenAPI handels token requests.
+service TokenAPI {
+  // Create creates a token.
+  rpc Create(CreateRequest) returns (CreateResponse) {
+    option (google.api.http) = {
+      post: "/v1/tokens"
+      body: "*"
+    };
+  }
+  // Info gives token information.
+  rpc Info(InfoRequest) returns (InfoResponse) {
+    option (google.api.http) = {
+      get: "/v1/tokens/{token}"
+    };
+  }
+}
+
+message CreateRequest {
+  // id is an id to identify the token.
+  string id = 1;
+  repeated string namespaces = 2;
+  string expires = 3;
+}
+
+message CreateResponse {
+  string token = 1;
+}
+
+message InfoRequest {
+  string token = 1;
+}
+
+message InfoResponse {
+  TokenInfo tokeninfo = 1;
+}
+

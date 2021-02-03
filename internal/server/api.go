@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
@@ -14,7 +15,8 @@ import (
 
 // API implements the GRPC API.
 type API struct {
-	r *registry.Registry
+	r            *registry.Registry
+	tokenHandler *auth.TokenHandler
 }
 
 // RegisterServer registers a server.
@@ -131,5 +133,44 @@ func (a *API) ListNamespace(_ context.Context, _ *discoveryv1.ListNamespaceReque
 
 	return &discoveryv1.ListNamespaceResponse{
 		Namespaces: convert.NamespacesToPB(namespaces),
+	}, nil
+}
+
+// Create creates an access token.
+func (a *API) Create(_ context.Context, in *discoveryv1.CreateRequest) (*discoveryv1.CreateResponse, error) {
+	var expiry time.Duration
+
+	if in.GetExpires() != "" {
+		d, err := time.ParseDuration(in.GetExpires())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid expiry duration %s: %s", in.GetExpires(), err)
+		}
+
+		expiry = d
+	}
+
+	token, err := a.tokenHandler.Create(in.Id, expiry, in.Namespaces...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to create token: %s", err)
+	}
+
+	return &discoveryv1.CreateResponse{
+		Token: token,
+	}, nil
+}
+
+// Info gives token information.
+func (a *API) Info(_ context.Context, in *discoveryv1.InfoRequest) (*discoveryv1.InfoResponse, error) {
+	u, err := a.tokenHandler.Validate(in.GetToken())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "token %s is not valid: %s", in.GetToken(), err)
+	}
+
+	return &discoveryv1.InfoResponse{
+		Tokeninfo: &discoveryv1.TokenInfo{
+			Id:         u.Username,
+			Namespaces: u.Namespaces,
+			ExpiresAt:  convert.TimeToPB(&u.ExpiresAt),
+		},
 	}, nil
 }

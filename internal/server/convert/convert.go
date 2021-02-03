@@ -16,7 +16,7 @@ func NamespaceToPB(n *discovery.Namespace) *discoveryv1.Namespace {
 	pb := &discoveryv1.Namespace{
 		Name:     n.Name,
 		Export:   int32(n.Export),
-		Modified: timeToPB(&n.Modified),
+		Modified: TimeToPB(&n.Modified),
 	}
 
 	return pb
@@ -27,7 +27,7 @@ func NamespaceFromPB(pb *discoveryv1.Namespace) *discovery.Namespace {
 	n := &discovery.Namespace{
 		Name:     pb.Name,
 		Export:   discovery.ExportConfig(pb.Export),
-		Modified: timeFromPB(pb.Modified),
+		Modified: TimeFromPB(pb.Modified),
 	}
 
 	return n
@@ -38,7 +38,7 @@ func ServerToPB(s *discovery.Server) *discoveryv1.Server {
 	pb := &discoveryv1.Server{
 		Name:     s.Name,
 		Labels:   s.Labels,
-		Modified: timeToPB(&s.Modified),
+		Modified: TimeToPB(&s.Modified),
 		State:    int64(s.State),
 	}
 
@@ -50,7 +50,7 @@ func ServerFromPB(pb *discoveryv1.Server) *discovery.Server {
 	s := &discovery.Server{
 		Name:     pb.GetName(),
 		Labels:   pb.GetLabels(),
-		Modified: timeFromPB(pb.Modified),
+		Modified: TimeFromPB(pb.Modified),
 		State:    discovery.ServerState(pb.GetState()),
 	}
 
@@ -90,7 +90,7 @@ func ServiceToPB(s *discovery.Service) *discoveryv1.Service {
 		Namespace:   s.Namespace,
 		Selector:    s.Selector,
 		Servers:     s.Servers,
-		Modified:    timeToPB(&s.Modified),
+		Modified:    TimeToPB(&s.Modified),
 	}
 
 	return pb
@@ -108,7 +108,7 @@ func ServiceFromPB(pb *discoveryv1.Service) *discovery.Service {
 		Namespace:   pb.GetNamespace(),
 		Selector:    pb.GetSelector(),
 		Servers:     pb.GetServers(),
-		Modified:    timeFromPB(pb.GetModified()),
+		Modified:    TimeFromPB(pb.GetModified()),
 	}
 
 	return s
@@ -136,7 +136,8 @@ func ServicesFromPB(s []*discoveryv1.Service) discovery.Services {
 	return result
 }
 
-func timeFromPB(ts *timestamp.Timestamp) time.Time {
+// TimeFromPB converts protobuf timestamps to time.Time.
+func TimeFromPB(ts *timestamp.Timestamp) time.Time {
 	var t time.Time
 
 	if ts == nil {
@@ -148,7 +149,8 @@ func timeFromPB(ts *timestamp.Timestamp) time.Time {
 	return t
 }
 
-func timeToPB(t *time.Time) *timestamp.Timestamp {
+// TimeToPB converts time.Time to protobuf timestamps.
+func TimeToPB(t *time.Time) *timestamp.Timestamp {
 	seconds := t.Unix()
 	nanos := int32(t.Sub(time.Unix(seconds, 0)))
 	ts := &timestamp.Timestamp{

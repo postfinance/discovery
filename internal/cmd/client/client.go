@@ -4,12 +4,20 @@ package client
 import (
 	"context"
 	"crypto/x509"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
+	"github.com/alecthomas/kong"
+	"github.com/pkg/errors"
+	"github.com/postfinance/discovery/internal/auth"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"github.com/zbindenren/king"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/metadata"
+	"gopkg.in/yaml.v3"
 )
 
 // CLI is the client command.
@@ -19,17 +27,21 @@ type CLI struct {
 	Service   serviceCmd   `cmd:"" help:"Register and unregister services."`
 	Namespace namespaceCmd `cmd:"" help:"Register and unregister namespaces."`
 	Import    importCmd    `cmd:"" help:"Import new services"`
+	Token     tokenCmd     `cmd:"" help:"Manage access tokens"`
+	Login     loginCmd     `cmd:"" help:"Perform OIDC login."`
 }
 
 // Globals are the global client flags.
 type Globals struct {
-	Address    string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
-	Timeout    time.Duration    `help:"The request timeout" default:"5s"`
-	Debug      bool             `short:"d" help:"Log debug output."`
-	Insecure   bool             `help:"use insecure connection without tls."`
-	ShowConfig king.ShowConfig  `help:"Show used config files"`
-	Version    king.VersionFlag `help:"Show version information"`
-	// Token      string           `help:"Authentication token"`
+	Address      string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
+	Timeout      time.Duration    `help:"The request timeout" default:"5s"`
+	Debug        bool             `short:"d" help:"Log debug output."`
+	Insecure     bool             `help:"use insecure connection without tls."`
+	ShowConfig   king.ShowConfig  `help:"Show used config files"`
+	Version      king.VersionFlag `help:"Show version information"`
+	Token        string           `help:"Authentication token" default:"~/.config/lslb/.token"`
+	OIDCEndpoint string           `help:"OIDC endpoint URL." required:"true"`
+	OIDCClientID string           `help:"OIDC client ID." required:"true"`
 }
 
 func (g Globals) ctx() (context.Context, context.CancelFunc) {
@@ -49,7 +61,12 @@ func (g Globals) conn() (*grpc.ClientConn, error) {
 		dialOption = grpc.WithTransportCredentials(creds)
 	}
 
-	dialOpts := []grpc.DialOption{dialOption}
+	token, err := g.getToken()
+	if err != nil {
+		return nil, err
+	}
+
+	dialOpts := []grpc.DialOption{dialOption, grpc.WithUnaryInterceptor(buildClientInterceptor(token))}
 
 	return grpc.Dial(g.Address, dialOpts...)
 }
@@ -79,4 +96,102 @@ func (g Globals) namespaceClient() (discoveryv1.NamespaceAPIClient, error) {
 	}
 
 	return discoveryv1.NewNamespaceAPIClient(conn), nil
+}
+
+func (g Globals) tokenClient() (discoveryv1.TokenAPIClient, error) {
+	conn, err := g.conn()
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryv1.NewTokenAPIClient(conn), nil
+}
+
+func buildClientInterceptor(token string) func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, grpc.UnaryInvoker, ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+token)
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+type token struct {
+	MachineToken string `yaml:"machine_token"` // for machines
+	RefreshToken string `yaml:"refresh_token"`
+	IDToken      string `yaml:"id_token"`
+}
+
+func (g Globals) loadToken() (*token, error) {
+	path := kong.ExpandPath(g.Token)
+
+	d, err := ioutil.ReadFile(path) //nolint: gosec // just reading token
+	if err != nil {
+		return nil, err
+	}
+
+	t := &token{}
+
+	if err := yaml.Unmarshal(d, t); err != nil {
+		return nil, err
+	}
+
+	return t, nil
+}
+
+func (g Globals) saveToken(t *auth.Token) error {
+	path := kong.ExpandPath(g.Token)
+	dir := filepath.Dir(path)
+
+	if err := os.MkdirAll(dir, 0750); err != nil {
+		return err
+	}
+
+	d, err := yaml.Marshal(t)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(path, d, 0600)
+}
+
+// getToken loads or asks for user or machine token. If it is
+// a user token it refreshes it if necessary.
+func (g Globals) getToken() (string, error) {
+	var token string
+
+	cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID)
+	if err != nil {
+		return "", err
+	}
+
+	t, err := g.loadToken()
+	if err != nil {
+		return "", errors.Wrap(err, "login required")
+	}
+
+	if err == nil && t.MachineToken == "" {
+		tkn := &auth.Token{
+			RefreshToken: t.RefreshToken,
+			IDToken:      t.IDToken,
+		}
+
+		nt, err := cli.Refresh(tkn)
+		if err != nil {
+			return "", err
+		}
+
+		token = nt.IDToken
+
+		if nt.IDToken != t.IDToken {
+			if err := g.saveToken(nt); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	if t.MachineToken != "" {
+		token = t.MachineToken
+	}
+
+	return token, nil
 }

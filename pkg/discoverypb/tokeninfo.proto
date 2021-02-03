@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "TokeninfoProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// TokenInfo represents a machine token.
+message TokenInfo {
+  // id is the id of the token.
+  string id = 1;
+  // namespaces defines which namespaces the token has access to.
+  repeated string namespaces = 2;
+  // expires_at shows the expiry time
+  google.protobuf.Timestamp expires_at = 3;
+}
