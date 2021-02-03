@@ -18,7 +18,20 @@ func (l loginCmd) Run(g *Globals) error {
 		return err
 	}
 
-	cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID)
+	opts := []auth.ClientOption{}
+
+	if g.CACert != "" {
+		pool, err := auth.AppendCertsToSystemPool(g.CACert)
+		if err != nil {
+			return err
+		}
+
+		transport := auth.NewTLSTransportFromCertPool(pool)
+
+		opts = append(opts, auth.WithTransport(transport))
+	}
+
+	cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID, opts...)
 	if err != nil {
 		return err
 	}

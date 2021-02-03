@@ -36,12 +36,13 @@ type Globals struct {
 	Address      string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
 	Timeout      time.Duration    `help:"The request timeout" default:"5s"`
 	Debug        bool             `short:"d" help:"Log debug output."`
-	Insecure     bool             `help:"use insecure connection without tls."`
+	Insecure     bool             `help:"use insecure connection without tls." xor:"tls"`
 	ShowConfig   king.ShowConfig  `help:"Show used config files"`
 	Version      king.VersionFlag `help:"Show version information"`
 	TokenPath    string           `help:"Authentication token" default:"~/.config/discovery/.token"`
 	OIDCEndpoint string           `help:"OIDC endpoint URL." required:"true"`
 	OIDCClientID string           `help:"OIDC client ID." required:"true"`
+	CACert       string           `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile" xor:"tls"`
 }
 
 func (g Globals) ctx() (context.Context, context.CancelFunc) {
@@ -55,6 +56,13 @@ func (g Globals) conn() (*grpc.ClientConn, error) {
 		pool, err := x509.SystemCertPool()
 		if err != nil {
 			return nil, err
+		}
+
+		if g.CACert != "" {
+			pool, err = auth.AppendCertsToSystemPool(g.CACert)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		creds := credentials.NewClientTLSFromCert(pool, "")

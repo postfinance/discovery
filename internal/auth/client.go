@@ -88,9 +88,14 @@ func NewClient(endPoint, clientID string, opts ...ClientOption) (*Client, error)
 // WithTimeout overrides the default timeout of the httpclient.
 func WithTimeout(timeout time.Duration) ClientOption {
 	return func(c *Client) {
-		c.cli = &http.Client{
-			Timeout: timeout,
-		}
+		c.cli.Timeout = timeout
+	}
+}
+
+// WithTransport overrides the default transport of the httpclient.
+func WithTransport(transport http.RoundTripper) ClientOption {
+	return func(c *Client) {
+		c.cli.Transport = transport
 	}
 }
 

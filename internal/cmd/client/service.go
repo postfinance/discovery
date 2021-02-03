@@ -17,7 +17,7 @@ type serviceCmd struct {
 }
 
 type serviceList struct {
-	Output    string `short:"o" default:"table" help:"Output formats. Valid cormats: json, yaml, csv, table."`
+	Output    string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
 	NoHeaders bool   `short:"N" help:"Do not print headers."`
 	Namespace string `short:"n" help:"If not empty only serices for a namespace are listed."`
 }

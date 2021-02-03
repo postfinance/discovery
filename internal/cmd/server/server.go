@@ -3,12 +3,14 @@ package server
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"regexp"
 	"syscall"
 
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zbindenren/king"
@@ -30,11 +32,15 @@ type serverCmd struct {
 	TokenSecret  string   `help:"The secret key to issue jwt machine tokens. If you change this, alle issued tokens are invalid." required:"true"`
 	OIDCEndpoint string   `help:"OIDC endpoint URL." required:"true"`
 	OIDCClientID string   `help:"OIDC client ID." required:"true"`
-	OIDCRoles    []string `help:"The the roles that are allowed to change member state." required:"true"`
+	OIDCRoles    []string `help:"The the roles that are allowed to change servers and namespaces and to issue machine tokens." required:"true"`
+	CACert       string   `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile"`
 }
 
 func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) error {
-	config := s.config()
+	config, err := s.config()
+	if err != nil {
+		return err
+	}
 
 	l.Infow("starting grpc server",
 		king.FlagMap(app, regexp.MustCompile("key"), regexp.MustCompile("password"), regexp.MustCompile("secret")).
@@ -62,7 +68,18 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) erro
 	return srv.Run(ctx)
 }
 
-func (s serverCmd) config() server.Config {
+func (s serverCmd) config() (server.Config, error) {
+	var transport http.RoundTripper
+
+	if s.CACert != "" {
+		pool, err := auth.AppendCertsToSystemPool(s.CACert)
+		if err != nil {
+			return server.Config{}, err
+		}
+
+		transport = auth.NewTLSTransportFromCertPool(pool)
+	}
+
 	return server.Config{
 		PrometheusRegistry: prometheus.NewRegistry(),
 		NumReplicas:        s.Replicas,
@@ -73,7 +90,8 @@ func (s serverCmd) config() server.Config {
 		OIDCClient:         s.OIDCClientID,
 		OIDCRoles:          s.OIDCRoles,
 		OIDCURL:            s.OIDCEndpoint,
-	}
+		Transport:          transport,
+	}, nil
 }
 
 func contextWithSignal(ctx context.Context, f func(s os.Signal), s ...os.Signal) context.Context {

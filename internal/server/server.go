@@ -54,6 +54,7 @@ type Config struct {
 	OIDCClient         string
 	OIDCRoles          []string
 	OIDCURL            string
+	Transport          http.RoundTripper
 }
 
 // New initializes a new Server.
@@ -115,7 +116,7 @@ func (s *Server) startGRPC() error {
 
 	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
 
-	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, 10*time.Second)
+	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, 10*time.Second, s.config.Transport)
 	if err != nil {
 		return err
 	}
