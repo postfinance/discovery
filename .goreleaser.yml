@@ -2,47 +2,52 @@ project_name: discovery
 release:
     disable: true
 builds:
-    - id: discoveryd
-      goos:
-        - linux
-      goarch:
-        - amd64
-      main: cmd/discoveryd/main.go
-      binary: discoveryd
-      env:
-        - CGO_ENABLED=0
     - id: discovery
       goos:
         - linux
       goarch:
         - amd64
-      main: cmd/discovery/main.go
+      main: ./cmd/discovery/
       binary: discovery
       env:
         - CGO_ENABLED=0
-archives:
-    - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}-{{ .Version }}'
-      replacements:
-        amd64: x86_64
-      format: zip
-      allow_different_binary_count: false
+    - id: discoveryd
+      goos:
+        - linux
+      goarch:
+        - amd64
+      main: ./cmd/discoveryd/
+      binary: discoveryd
+      env:
+        - CGO_ENABLED=0
 nfpms:
     - file_name_template: '{{ .ProjectName }}-{{ .Version }}.{{ .Arch }}'
       package_name: discovery
       replacements:
+        "386": 32bit
         amd64: x86_64
         arm: ARM
         arm64: ARM64
         darwin: macOS
+        dragonfly: DragonFlyBSD
+        freebsd: FreeBSD
         linux: Linux
+        netbsd: NetBSD
+        openbsd: OpenBSD
         windows: Windows
+      contents:
+        - src: packaging/rpm/discovery.service
+          dst: /usr/lib/systemd/system/discovery.service
+      scripts:
+        preinstall: packaging/rpm/pre.sh
+        postinstall: packaging/rpm/post.sh
       formats:
         - deb
         - rpm
       vendor: Die Schweizerische Post - PostFinance
-      homepage: github.com/zbindenren/discovery
+      homepage: https://github.com//postfinance/discovery
       maintainer: Rene Zbinden <rene.zbinden@postfinance.ch>
-      description: TBD
+      description: Service discovery for prometheus with etcd backend.
       license: Die Schweizerische Post - PostFinance
       bindir: /usr/bin
 checksum:
@@ -50,9 +55,19 @@ checksum:
 dockers:
     - ids:
         - discovery
+        - discoveryd
       goos: linux
       goarch: amd64
       dockerfile: packaging/docker/Dockerfile
-      skip_push: "true"
+      image_templates:
+        - 'postfinance/discovery:{{ .Major }}.{{ .Minor }}.{{ .Patch }}'
+        - 'postfinance/discovery:{{ .Major }}.{{ .Minor }}'
+        - 'postfinance/discovery:{{ .Major }}'
+        - 'postfinance/discovery:latest'
       extra_files:
         - packaging/docker/docker-entrypoint.sh
+      build_flag_templates:
+        - --label=org.opencontainers.image.version={{ .Version }}
+        - --label=org.opencontainers.image.revision={{ .ShortCommit }}
+        - --label=org.opencontainers.image.created={{ .Date }}
+        - --label=org.opencontainers.image.vendor=PostFinance AG

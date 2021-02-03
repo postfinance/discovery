@@ -1,13 +1,9 @@
-FROM docker.repo.pnet.ch/pf/alpine:latest
+FROM alpine:latest
 
-ENV TZ=Europe/Zurich
-
-RUN http_proxy=http://outapplpf.pnet.ch:3128 apk add --no-cache tzdata
-
-COPY discovery /discovery
+COPY discovery /usr/bin/discovery
+COPY discoveryd /usr/bin/discoveryd
 COPY packaging/docker/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod 750 /docker-entrypoint.sh
 
+CMD ["server"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["discovery"]
-
-EXPOSE 3001
