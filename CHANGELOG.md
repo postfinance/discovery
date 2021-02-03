@@ -1,5 +1,12 @@
-## 0.0.1 initial release (2021-02-03)
+## 0.1.0 (2021-02-03)
 
+### New Features
+
+* **common**: add new option `--ca-cert` to specify additional ca certifiactes ([c9668c18](https://github.com/postfinance/discovery/commit/c9668c18))
+
+
+
+## 0.0.1 initial release (2021-02-03)
 
 ### Bug Fixes
 
@@ -16,7 +23,6 @@
 * **exporter**: only export services for configured server ([9b1e3d2b](https://github.com/postfinance/discovery/commit/9b1e3d2b))
 * **exporter**: rewrite files when namespace exportconfig changes ([000a0c1a](https://github.com/postfinance/discovery/commit/000a0c1a))
 * **server**: metric discovery_services_count metrics is now correctly calculated ([#5](https://github.com/postfinance/discovery/issues/5), [c8ec60c0](https://github.com/postfinance/discovery/commit/c8ec60c0))
-
 
 ### New Features
 
