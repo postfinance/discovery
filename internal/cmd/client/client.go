@@ -24,11 +24,11 @@ import (
 type CLI struct {
 	Globals
 	Server    serverCmd    `cmd:"" help:"Register and unregister servers."`
+	Login     loginCmd     `cmd:"" help:"Perform OIDC login."`
 	Service   serviceCmd   `cmd:"" help:"Register and unregister services."`
 	Namespace namespaceCmd `cmd:"" help:"Register and unregister namespaces."`
 	Import    importCmd    `cmd:"" help:"Import new services"`
 	Token     tokenCmd     `cmd:"" help:"Manage access tokens"`
-	Login     loginCmd     `cmd:"" help:"Perform OIDC login."`
 }
 
 // Globals are the global client flags.
@@ -39,7 +39,7 @@ type Globals struct {
 	Insecure     bool             `help:"use insecure connection without tls."`
 	ShowConfig   king.ShowConfig  `help:"Show used config files"`
 	Version      king.VersionFlag `help:"Show version information"`
-	Token        string           `help:"Authentication token" default:"~/.config/lslb/.token"`
+	TokenPath    string           `help:"Authentication token" default:"~/.config/lslb/.token"`
 	OIDCEndpoint string           `help:"OIDC endpoint URL." required:"true"`
 	OIDCClientID string           `help:"OIDC client ID." required:"true"`
 }
@@ -122,7 +122,7 @@ type token struct {
 }
 
 func (g Globals) loadToken() (*token, error) {
-	path := kong.ExpandPath(g.Token)
+	path := kong.ExpandPath(g.TokenPath)
 
 	d, err := ioutil.ReadFile(path) //nolint: gosec // just reading token
 	if err != nil {
@@ -139,7 +139,7 @@ func (g Globals) loadToken() (*token, error) {
 }
 
 func (g Globals) saveToken(t *auth.Token) error {
-	path := kong.ExpandPath(g.Token)
+	path := kong.ExpandPath(g.TokenPath)
 	dir := filepath.Dir(path)
 
 	if err := os.MkdirAll(dir, 0750); err != nil {
