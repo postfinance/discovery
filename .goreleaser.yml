@@ -1,6 +1,8 @@
 project_name: discovery
 release:
-    disable: true
+  github:
+    owner: postfinance
+    name: discovery
 builds:
     - id: discovery
       goos:
