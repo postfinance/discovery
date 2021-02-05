@@ -1,3 +1,17 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+- [discovery](#discovery)
+  - [Architecture](#architecture)
+    - [Example Workflow:](#example-workflow)
+    - [Authentication](#authentication)
+    - [Configuration](#configuration)
+    - [API](#api)
+    - [Systemd](#systemd)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # discovery
 Service discovery for prometheus with etcd backend. This service can be useful in environments
 where no prometheus service discovery other than [file-sd](https://prometheus.io/docs/guides/file-sd/) is possible.
