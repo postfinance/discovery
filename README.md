@@ -4,11 +4,11 @@
 
 - [discovery](#discovery)
   - [Architecture](#architecture)
-    - [Example Workflow:](#example-workflow)
-    - [Authentication](#authentication)
-    - [Configuration](#configuration)
-    - [API](#api)
-    - [Systemd](#systemd)
+  - [Example Workflow:](#example-workflow)
+  - [Authentication](#authentication)
+  - [Configuration](#configuration)
+  - [API](#api)
+  - [Systemd](#systemd)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -26,7 +26,7 @@ The service discovery consists of three components:
 * An exporter service to export stored services to filesystem for promehteus [file-sd](https://prometheus.io/docs/guides/file-sd/).
 * CLI to register or unregister services and perform admin tasks.
 
-### Example Workflow:
+## Example Workflow:
 
 First we have to create a (prometheus) server:
 
@@ -132,7 +132,7 @@ $ cat /tmp/discovery/prometheus1.example.com/blackbox/default-blackbox/blackbox.
 ]
 ```
 
-### Authentication
+## Authentication
 Discovery is meant to work with an openid connect server (Password Grant Flow). The following options exist for configuration:
 
 ```
@@ -170,7 +170,7 @@ namespaces: [default default-blackbox]
 expiry: never
 ```
 
-### Configuration
+## Configuration
 
 Every flag can be set with environment variables. Run `discovery --help` to check which variables are available. It is also possible to use yaml configuration files. You can check which config files are used with:
 
@@ -192,10 +192,10 @@ oidc-roles:
 oidc-endpoint: https://auth.example.com/auth/realms/discovery
 ```
 
-### API
+## API
 The service discovery has a grpc API. The proto files are [here](./pkg/discoverypb). The generated go grpc code is also in that directory.
 
-### Systemd
+## Systemd
 It is possible to register and unregister services on start/stop with systemd. An example:
 
 ```
