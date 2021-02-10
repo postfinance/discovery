@@ -30,11 +30,12 @@ The service discovery consists of three components:
 
 ## Example Workflow:
 
-First we have to create a (prometheus) server:
+First we have to register a (prometheus) server:
 
 ```console
 $ discovery server register prometheus1.example.com --labels=environment=test
 ```
+The labels above can be used on service registration to select a server via kubernetes style label selecors (see below).
 
 To list all registered servers:
 ```console
@@ -51,7 +52,7 @@ $ discovery service register -e http://example.com/metrics example --labels=labe
 ```
 
 The selector is a kubernetes style [label selector](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) to select a server from the registered servers.
-When you start the discovery service with a number of replicas n>1, a service is distributed to n servers with the corresponding labels. The service discovery uses a [consistent hashing algorithm](https://arxiv.org/pdf/1406.2294v1.pdf)
+When you start the discovery service with `--replicas=n` and n>1, a service is distributed to n servers with the corresponding labels. The service discovery uses a [consistent hashing algorithm](https://arxiv.org/pdf/1406.2294v1.pdf)
 to distribute services among servers.
 
 You can see the regsitered services:
@@ -62,7 +63,7 @@ NAME    NAMESPACE ID                                   ENDPOINT                 
 example default   93c156b1-f218-5d79-88a5-219307e59d29 http://example.com/metrics prometheus1.example.com label1=value1,label2=value2 environment=test 2021-02-04T14:13:50Z
 ```
 
-You can specify a namespace with `-n`. The namespace configures how the service is exported (standard or blackbox).
+You can specify a namespace with `-n`. The namespace defines how its services are exported (standard or blackbox). You can also create namespaces to group services. The service endpoint is unique per namepace.
 
 To view all configured namespaces:
 
@@ -92,7 +93,7 @@ blackbox default-blackbox e988791c-2c4e-5eeb-b3b8-db3c0cf82719 http://blackbox.e
 example  default          93c156b1-f218-5d79-88a5-219307e59d29 http://example.com/metrics  prometheus1.example.com label1=value1,label2=value2 environment=test 2021-02-05T07:59:17Z
 ```
 
-Now you can start the exporter service on the corresponding promehteus server:
+Now you can start the exporter service on the corresponding prometheus server:
 
 ```console
 $ discoveryd exporter --directory=/tmp/discovery --server=prometheus1.example.com
@@ -144,7 +145,7 @@ Discovery is meant to work with an openid connect server (Password Grant Flow). 
 --ca-cert=STRING                             Path to a custom tls ca pem file. Certificates in this file are added to system cert pool ($DISCOVERY_CA_CERT).
 ```
 
-With `--oidc-roles` you can specify a comma separated list of roles, that can register servers, namespaces and services.
+With `--oidc-roles` you can specify a comma separated list of roles, that can register servers, namespaces and services. Those roles can also issue machine access tokens.
 
 To login run:
 
@@ -161,7 +162,7 @@ $ token create -n default,default-blackbox ansible-user
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhbnNpYmxlLXVzZXIiLCJpYXQiOjE2MTI1MTM1ODkuMDA3ODY2OSwiaXNzIjoidGhlc2VjcmV0IiwibmJmIjoxNjEyNTEzNTg5LjAwNzg2NjksIm5hbWVzcGFjZXMiOlsiZGVmYXVsdCIsImRlZmF1bHQtYmxhY2tib3giXX0.IUKFuyKMAU5aRZJPLp67Uei9o2G5neJz_Ha86JZnd8o
 ```
 
-The above command allows that token to register services in `default` and `default-blackbox` namespaces. `ansible-user` is an ID to identify the token.
+The above command creates a token with access to `default` and `default-blackbox` namespaces. `ansible-user` is an ID to identify the token.
 
 To view a token run:
 
