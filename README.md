@@ -8,6 +8,8 @@
   - [Authentication](#authentication)
   - [Configuration](#configuration)
   - [API](#api)
+    - [GRPC](#grpc)
+    - [REST](#rest)
   - [Systemd](#systemd)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -195,8 +197,8 @@ oidc-endpoint: https://auth.example.com/auth/realms/discovery
 ## API
 
 ### GRPC
-The service discovery has a GRPC API. The proto files can be found [here](./pkg/discoverypb). The generated GRPC go code is also in that directory. To send the authorization token with the go client you can
-do it with a [UnaryClientInterceptor](https://github.com/grpc/grpc-go/blob/master/interceptor.go) like below:
+The service discovery has a GRPC API. The proto files can be found [here](./pkg/discoverypb). The generated GRPC go code is also in that directory. To send the authorization token with the go client you
+can use an [UnaryClientInterceptor](https://github.com/grpc/grpc-go/blob/master/interceptor.go) like below:
 
 ```go
 func buildClientInterceptor(token string) func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, grpc.UnaryInvoker, ...grpc.CallOption) error {
@@ -208,7 +210,7 @@ func buildClientInterceptor(token string) func(context.Context, string, interfac
 }
 ```
 
-### Rest
+### REST
 It is also possible to access the a rest api generated with [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The swagger api documentation is available under http://localhost:3002/swagger/
 (when running the server with default settings).
 
