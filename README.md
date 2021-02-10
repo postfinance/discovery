@@ -30,12 +30,12 @@ The service discovery consists of three components:
 
 First we have to create a (prometheus) server:
 
-```
+```console
 $ discovery server register prometheus1.example.com --labels=environment=test
 ```
 
 To list all registered servers:
-```
+```console
 $ discovery server list
 NAME                    MODIFIED             STATE  LABELS
 prometheus1.example.com 2021-02-04T14:12:50Z active environment=test
@@ -43,7 +43,7 @@ prometheus1.example.com 2021-02-04T14:12:50Z active environment=test
 
 Now you can register a service:
 
-```
+```console
 $ discovery service register -e http://example.com/metrics example --labels=label1=value1,label2=value2 --selector=environment=test
 2021-02-04T15:13:50.085+0100    INFO    client/service.go:82    service registered      {"id": "93c156b1-f218-5d79-88a5-219307e59d29"}
 ```
@@ -54,7 +54,7 @@ to distribute services among servers.
 
 You can see the regsitered services:
 
-```
+```console
 $ discovery service list
 NAME    NAMESPACE ID                                   ENDPOINT                   SERVERS                 LABELS                      SELECTOR         MODIFIED             DESCRIPTION
 example default   93c156b1-f218-5d79-88a5-219307e59d29 http://example.com/metrics prometheus1.example.com label1=value1,label2=value2 environment=test 2021-02-04T14:13:50Z
@@ -64,7 +64,7 @@ You can specify a namespace with `-n`. The namespace configures how the service 
 
 To view all configured namespaces:
 
-```
+```console
 $ discovery namespace list
 NAME    EXPORTCONFIG MODIFIED
 default standard     2021-02-04T14:07:03Z
@@ -72,7 +72,7 @@ default standard     2021-02-04T14:07:03Z
 
 Register a blackbox namespace:
 
-```
+```console
 $ discovery namespace register -e blackbox default-blackbox
 $ discovery namespace list
 NAME             EXPORTCONFIG MODIFIED
@@ -82,7 +82,7 @@ default-blackbox blackbox     2021-02-05T08:00:18Z
 
 Now we can register a blackbox service:
 
-```
+```console
 $ discovery service register -e http://blackbox.example.com -n default-blackbox blackbox -s environment=test
 $ discovery service list
 NAME     NAMESPACE        ID                                   ENDPOINT                    SERVERS                 LABELS                      SELECTOR         MODIFIED             DESCRIPTION
@@ -92,7 +92,7 @@ example  default          93c156b1-f218-5d79-88a5-219307e59d29 http://example.co
 
 Now you can start the exporter service on the corresponding promehteus server:
 
-```
+```console
 $ discoveryd exporter --directory=/tmp/discovery --server=prometheus1.example.com
 2021-02-05T09:08:29.671+0100    INFO    server/exporter.go:28   starting exporter       {"buildinfo-date": "2021-02-04T06:48:33Z", "buildinfo-go": "go1.15.5", "buildinfo-revision": "1c8d0652", "buildinfo-version": "v0.1.0-SNAPSHOT-1c8d065", "debug": false, "directory": "/tmp/discovery", "etcd-auto-sync-interval": "10s", "etcd-ca": "", "etcd-ca-file": "", "etcd-cert": "", "etcd-cert-file": "", "etcd-dial-timeout": "5s", "etcd-endpoints": ["localhost:2379"], "etcd-key": "", "etcd-key-file": "", "etcd-password": "", "etcd-prefix": "/discovery", "etcd-request-timeout": "5s", "etcd-user": "", "profiler-enabled": false, "profiler-listen": ":6666", "profiler-timeout": "5m0s", "resync-interval": "1h0m0s", "server": "prometheus1.example.com", "show-config": false}
 2021-02-05T09:08:29.675+0100    INFO    exporter/exporter.go:76 sync services
@@ -102,7 +102,7 @@ $ discoveryd exporter --directory=/tmp/discovery --server=prometheus1.example.co
 
 As you can see, the exporter created two files which can be used by prometheus for file_sd. The created files have different content depending on the namespace export configuration (`standard` or `blackbox`):
 
-```
+```console
 $ cat /tmp/discovery/prometheus1.example.com/standard/default/example.json |jq
 [
   {
@@ -121,7 +121,7 @@ $ cat /tmp/discovery/prometheus1.example.com/standard/default/example.json |jq
 ]
 ```
 
-```
+```console
 $ cat /tmp/discovery/prometheus1.example.com/blackbox/default-blackbox/blackbox.json |jq
 [
   {
@@ -146,7 +146,7 @@ With `--oidc-roles` you can specify a comma separated list of roles, that can re
 
 To login run:
 
-```
+```console
 $ discovery login
 ```
 
@@ -154,7 +154,7 @@ On successful login the token is saved to `~/.config/discovery/.token` for all s
 
 You can create machine tokens with:
 
-```
+```console
 $ token create -n default,default-blackbox ansible-user
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhbnNpYmxlLXVzZXIiLCJpYXQiOjE2MTI1MTM1ODkuMDA3ODY2OSwiaXNzIjoidGhlc2VjcmV0IiwibmJmIjoxNjEyNTEzNTg5LjAwNzg2NjksIm5hbWVzcGFjZXMiOlsiZGVmYXVsdCIsImRlZmF1bHQtYmxhY2tib3giXX0.IUKFuyKMAU5aRZJPLp67Uei9o2G5neJz_Ha86JZnd8o
 ```
@@ -163,7 +163,7 @@ The above command allows that token to register services in `default` and `defau
 
 To view a token run:
 
-```
+```console
 $ discovery token info eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhbnNpYmxlLXVzZXIiLCJpYXQiOjE2MTI1MTM1ODkuMDA3ODY2OSwiaXNzIjoidGhlc2VjcmV0IiwibmJmIjoxNjEyNTEzNTg5LjAwNzg2NjksIm5hbWVzcGFjZXMiOlsiZGVmYXVsdCIsImRlZmF1bHQtYmxhY2tib3giXX0.IUKFuyKMAU5aRZJPLp67Uei9o2G5neJz_Ha86JZnd8o
 id: ansible-user
 namespaces: [default default-blackbox]
@@ -174,7 +174,7 @@ expiry: never
 
 Every flag can be set with environment variables. Run `discovery --help` to check which variables are available. It is also possible to use yaml configuration files. You can check which config files are used with:
 
-```
+```console
 $ discovery --show-config
 Configuration files:
   /home/user/.config/discovery/config.yaml                       parsed
@@ -193,7 +193,30 @@ oidc-endpoint: https://auth.example.com/auth/realms/discovery
 ```
 
 ## API
-The service discovery has a grpc API. The proto files are [here](./pkg/discoverypb). The generated go grpc code is also in that directory.
+
+### GRPC
+The service discovery has a GRPC API. The proto files can be found [here](./pkg/discoverypb). The generated GRPC go code is also in that directory. To send the authorization token with the go client you can
+do it with a [UnaryClientInterceptor](https://github.com/grpc/grpc-go/blob/master/interceptor.go) like below:
+
+```go
+func buildClientInterceptor(token string) func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, grpc.UnaryInvoker, ...grpc.CallOption) error {
+	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+token)
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+```
+
+### Rest
+It is also possible to access the a rest api generated with [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The swagger api documentation is available under http://localhost:3002/swagger/
+(when running the server with default settings).
+
+To access the API you have to set an authorization header:
+
+```console
+curl -X GET "http://localhost:3002/v1/namespaces" -H  "accept: application/json" -H " -H "authorization: bearer <token>""
+```
 
 ## Systemd
 It is possible to register and unregister services on start/stop with systemd. An example:
