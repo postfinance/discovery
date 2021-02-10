@@ -33,3 +33,5 @@ generate:
       output: .
     - name: grpc-gateway
       output: .
+    - name: swagger
+      output: ../../internal/server/swagger/api

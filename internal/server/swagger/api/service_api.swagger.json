@@ -1,0 +1,199 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "service_api.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/services": {
+      "get": {
+        "summary": "ListService lists all services.",
+        "operationId": "ListService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1ListServiceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServiceAPI"
+        ]
+      },
+      "post": {
+        "summary": "RegisterService registers a service.",
+        "operationId": "RegisterService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterServiceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterServiceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ServiceAPI"
+        ]
+      }
+    },
+    "/v1/services/{namespace}/{id}": {
+      "delete": {
+        "summary": "UnRegisterService unregisters a service.",
+        "operationId": "UnRegisterService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1UnRegisterServiceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServiceAPI"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1ListServiceResponse": {
+      "type": "object",
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Service"
+          }
+        }
+      }
+    },
+    "v1RegisterServiceRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "endpoint": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "selector": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RegisterServiceResponse": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "$ref": "#/definitions/v1Service"
+        }
+      }
+    },
+    "v1Service": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is the generated ID of the registered service."
+        },
+        "name": {
+          "type": "string",
+          "description": "name is the name of the service. This name is used to group the registered services."
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the URL under which the service can be reached."
+        },
+        "namespace": {
+          "type": "string",
+          "description": "namespace is the namespace where the service is registered. A service can only exist once per namespace."
+        },
+        "selector": {
+          "type": "string",
+          "description": "selector is an optional k8s style selector to choose a group of servers a service is distributed to."
+        },
+        "servers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "servers is the list of servers responsible for scraping that service."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "labels are key/value pairs that can attached to a service."
+        },
+        "description": {
+          "type": "string",
+          "description": "describtion can be used to descrive the service."
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "modified is the the time when the service is created or modified."
+        }
+      },
+      "description": "Service represents a service."
+    },
+    "v1UnRegisterServiceResponse": {
+      "type": "object"
+    }
+  }
+}

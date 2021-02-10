@@ -6,18 +6,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: docker://golangci/golangci-lint:v1.35.2
+    - uses: actions/setup-go@v2
       with:
-        args: golangci-lint run
-      env:
-        CGO_ENABLED: 0
+        go-version: 1.16.0-rc1
+        stable: false
+    # Use @master because we want the
+    # skip-go-installation option which has not yet been released.
+    - name: Install golangci-lint
+      uses: golangci/golangci-lint-action@master
+      with:
+        version: v1.36.0
+        skip-go-installation: true
   test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-go@v2
       with:
-        go-version: 1.15
+        go-version: 1.16.0-rc1
+        stable: false
     - name: Run Unit tests
       run: go test -race -covermode atomic -coverprofile=profile.cov ./...
     - name: Send coverage
@@ -41,7 +48,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.15
+        go-version: 1.16.0-rc1
+        stable: false
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:
@@ -69,7 +77,8 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.15
+        go-version: 1.16.0-rc1
+        stable: false
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:

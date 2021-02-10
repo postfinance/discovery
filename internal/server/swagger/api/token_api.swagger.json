@@ -1,0 +1,129 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "token_api.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/tokens": {
+      "post": {
+        "summary": "Create creates a token.",
+        "operationId": "Create",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1CreateResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateRequest"
+            }
+          }
+        ],
+        "tags": [
+          "TokenAPI"
+        ]
+      }
+    },
+    "/v1/tokens/{token}": {
+      "get": {
+        "summary": "Info gives token information.",
+        "operationId": "Info",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1InfoResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TokenAPI"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1CreateRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is an id to identify the token."
+        },
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "expires": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CreateResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "v1InfoResponse": {
+      "type": "object",
+      "properties": {
+        "tokeninfo": {
+          "$ref": "#/definitions/v1TokenInfo"
+        }
+      }
+    },
+    "v1TokenInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "id is the id of the token."
+        },
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "namespaces defines which namespaces the token has access to."
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "title": "expires_at shows the expiry time"
+        }
+      },
+      "description": "TokenInfo represents a machine token."
+    }
+  }
+}

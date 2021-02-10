@@ -1,0 +1,142 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "namespace_api.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/namespaces": {
+      "get": {
+        "summary": "ListNamespace lists all namespaces.",
+        "operationId": "ListNamespace",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1ListNamespaceResponse"
+            }
+          }
+        },
+        "tags": [
+          "NamespaceAPI"
+        ]
+      },
+      "post": {
+        "summary": "RegisterNamespace registers a namespace.",
+        "operationId": "RegisterNamespace",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterNamespaceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterNamespaceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "NamespaceAPI"
+        ]
+      }
+    },
+    "/v1/namespaces/{name}": {
+      "delete": {
+        "summary": "UnRegisterNamespace unregisters a namespace.",
+        "operationId": "UnregisterNamespace",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1UnregisterNamespaceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "NamespaceAPI"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1ListNamespaceResponse": {
+      "type": "object",
+      "properties": {
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Namespace"
+          }
+        }
+      }
+    },
+    "v1Namespace": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "name is the namespace name."
+        },
+        "export": {
+          "type": "integer",
+          "format": "int32",
+          "description": "export configures how the services in namespaces gets exported."
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "modified is the the time when the service is created or modified."
+        }
+      },
+      "description": "Namespace represents a namespace."
+    },
+    "v1RegisterNamespaceRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "export": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "v1RegisterNamespaceResponse": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "$ref": "#/definitions/v1Namespace"
+        }
+      }
+    },
+    "v1UnregisterNamespaceResponse": {
+      "type": "object"
+    }
+  }
+}

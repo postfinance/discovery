@@ -1,0 +1,151 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "server_api.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/servers": {
+      "get": {
+        "summary": "ListServer lists all servers.",
+        "operationId": "ListServer",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1ListServerResponse"
+            }
+          }
+        },
+        "tags": [
+          "ServerAPI"
+        ]
+      },
+      "post": {
+        "summary": "RegisterServer registers a server.",
+        "operationId": "RegisterServer",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterServerResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterServerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ServerAPI"
+        ]
+      }
+    },
+    "/v1/servers/{name}": {
+      "delete": {
+        "summary": "UnRegisterServer unregisters a server.",
+        "operationId": "UnregisterServer",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v1UnregisterServerResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ServerAPI"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "v1ListServerResponse": {
+      "type": "object",
+      "properties": {
+        "servers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1Server"
+          }
+        }
+      }
+    },
+    "v1RegisterServerRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1RegisterServerResponse": {
+      "type": "object",
+      "properties": {
+        "server": {
+          "$ref": "#/definitions/v1Server"
+        }
+      }
+    },
+    "v1Server": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "name is the server's name."
+        },
+        "labels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "labels are key/value pairs that can attached to a service. it provides the possibility\nto choose servers during service registration via selector."
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "description": "modified is the the time when the service is created or modified."
+        },
+        "state": {
+          "type": "string",
+          "format": "int64",
+          "description": "state defines the server state."
+        }
+      },
+      "description": "Server represents a server."
+    },
+    "v1UnregisterServerResponse": {
+      "type": "object"
+    }
+  }
+}

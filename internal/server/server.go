@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"net"
 	"net/http"
@@ -31,6 +32,11 @@ import (
 
 const (
 	httpStopTimeout = 10 * time.Second
+)
+
+var (
+	//go:embed swagger/*
+	static embed.FS //nolint: gochecknoglobals // no other possibility
 )
 
 // Server represents the discovery server.
@@ -225,6 +231,7 @@ func (s *Server) startHTTP(ctx context.Context) error {
 		panic("interface is not prometheus.Registry")
 	}
 
+	mux.Handle("/swagger/", http.FileServer(http.FS(static)))
 	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	mux.Handle("/", gwmux)
 
