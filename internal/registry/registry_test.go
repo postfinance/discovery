@@ -3,16 +3,16 @@ package registry
 import (
 	"testing"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store/hash"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/postfinance/discovery"
 	"go.uber.org/zap"
 )
 
 func TestRegistry(t *testing.T) {
-	c, err := hash.New()
+	c, err := hash.New(hash.WithPrefix("/disovery"))
 	require.NoError(t, err)
 
 	r, err := New(c, prometheus.NewRegistry(), zap.NewNop().Sugar(), 2)

@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/store/hash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/postfinance/discovery"
 )
 
 func TestNamespace(t *testing.T) {
-	c, err := hash.New()
+	c, err := hash.New(hash.WithPrefix(dftlGlobalPrefix))
 	require.NoError(t, err)
 
 	r := NewNamespace(c)

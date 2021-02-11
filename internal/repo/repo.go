@@ -2,8 +2,9 @@
 // in a (etcd) repository.
 package repo
 
+// prefixes relative to the global prefix
 const (
-	namespacePrefix = "/discovery/namespace/v1"
-	serverPrefix    = "/discovery/server/v1"
-	servicePrefix   = "/discovery/service/v1"
+	namespacePrefix = "namespace/v1"
+	serverPrefix    = "server/v1"
+	servicePrefix   = "service/v1"
 )

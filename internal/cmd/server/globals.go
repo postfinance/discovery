@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/postfinance/profiler"
@@ -37,10 +39,19 @@ type Etcd struct {
 	RequestTimeout   time.Duration `help:"Etcd request timeout" default:"5s"`
 }
 
+var (
+	isValidPrefix = regexp.MustCompile(`^/[a-z]+$`)
+)
+
 func (e Etcd) backend() (store.Backend, error) {
+	if !isValidPrefix.MatchString(e.Prefix) {
+		return nil, errors.New("store prefix must start with '/' followed by at least one letter in the range 'a-z'")
+	}
+
 	return etcd.New(
 		etcd.WithEndpoints(e.Endpoints),
 		etcd.WithUsername(e.User),
+		etcd.WithPrefix(e.Prefix),
 		etcd.WithPassword(e.Password),
 		etcd.WithKey(e.Key),
 		etcd.WithKeyFile(e.KeyFile),
