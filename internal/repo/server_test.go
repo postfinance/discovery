@@ -10,7 +10,7 @@ import (
 )
 
 func TestServer(t *testing.T) {
-	c, err := hash.New(hash.WithPrefix(dftlGlobalPrefix))
+	c, err := hash.New(hash.WithPrefix("/discovery"))
 	require.NoError(t, err)
 
 	r := NewServer(c)
