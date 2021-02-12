@@ -38,8 +38,18 @@ nfpms:
         openbsd: OpenBSD
         windows: Windows
       contents:
-        - src: packaging/rpm/discovery.service
-          dst: /usr/lib/systemd/system/discovery.service
+        - src: packaging/rpm/*.service
+          dst: /usr/lib/systemd/system/
+        - src: packaging/rpm/exporter
+          dst: /etc/sysconfig/exporter
+          type: config
+          file_info:
+            mode: 0640
+        - src: packaging/rpm/discovery
+          dst: /etc/sysconfig/discovery
+          type: config
+          file_info:
+            mode: 0640
       scripts:
         preinstall: packaging/rpm/pre.sh
         postinstall: packaging/rpm/post.sh

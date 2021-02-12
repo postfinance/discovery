@@ -1,8 +1,11 @@
 # Exporter example file
-# Run discoveryd server -h for all options
+# Run discoveryd exporter -h for all options
 DEBUG=false
 DISCOVERY_ETCD_ENDPOINTS=localhost:2379
 DISCOVERY_ETCD_AUTO_SYNC_INTERVAL=10s
 DISCOVERY_ETCD_DIAL_TIMEOUT=5s
 DISCOVERY_ETCD_REQUEST_TIMEOUT=5s
-DISCOVERY_LISTEN=:3001
+DISCOVERY_DIRECTORY=/tmp/discovery
+DISCOVERY_SERVER=server1.example.com
+DISCOVERY_RESYNC_INTERVAL=30m
+

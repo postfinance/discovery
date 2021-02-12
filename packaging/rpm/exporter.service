@@ -1,12 +1,13 @@
 [Unit]
-Description=discovery server service
+Description=discovery exporter service
 Wants=network.target
 After=network.target
 
 [Service]
 Restart=always
 RestartSec=10
-EnvironmentFile=-/etc/sysconfig/discovery
+User=prometheus
+EnvironmentFile=-/etc/sysconfig/exporter
 ExecStart=/usr/bin/discoveryd exporter
 
 [Install]
