@@ -1,3 +1,13 @@
+## 0.2.0 (2021-02-12)
+
+
+### New Features
+
+* **common**: make etcd prefix configurable ([647b5fe3](https://github.com/postfinance/discovery/commit/647b5fe3))
+* **discoveryd**: serve swagger-ui with grpc-gateway api doc ([2ca0e337](https://github.com/postfinance/discovery/commit/2ca0e337))
+
+
+
 ## 0.1.0 (2021-02-03)
 
 ### New Features
