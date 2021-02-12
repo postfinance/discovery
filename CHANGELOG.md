@@ -1,3 +1,14 @@
+## 0.2.1 (2021-02-12)
+
+
+### Bug Fixes
+
+* **common**: add exporter and discovery systemd files ([f15a4e81](https://github.com/postfinance/discovery/commit/f15a4e81))
+* **common**: allow '-' character in etcd prefix. ([1d48aa02](https://github.com/postfinance/discovery/commit/1d48aa02))
+* **exporter**: update to new etcd store package ([f5ed78ad](https://github.com/postfinance/discovery/commit/f5ed78ad))
+
+
+
 ## 0.2.0 (2021-02-12)
 
 
