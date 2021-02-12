@@ -40,7 +40,7 @@ type Etcd struct {
 }
 
 var (
-	isValidPrefix = regexp.MustCompile(`^/[a-z]+$`)
+	isValidPrefix = regexp.MustCompile(`^/[a-z-]+$`)
 )
 
 func (e Etcd) backend() (store.Backend, error) {
