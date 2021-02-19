@@ -3,6 +3,7 @@
 package registry
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"hash/crc64"
@@ -73,17 +74,46 @@ func New(backend store.Backend, reg prometheus.Registerer, log *zap.SugaredLogge
 		log.Errorw("failed to initialize service metrics", "err", err)
 	}
 
-	// initialize cache
-	namespaces, err := registry.namespaceRepo.List()
-	if err != nil {
+	if err := registry.initNamespaceCache(); err != nil {
 		return nil, err
 	}
 
-	for _, n := range namespaces {
-		registry.namespaceCache.add(n)
-	}
-
 	return &registry, nil
+}
+
+// StartCacheUpdater starts a namespace cache updater. It resyncs cache all reSyncInterval.
+func (r Registry) StartCacheUpdater(ctx context.Context, reSyncInterval time.Duration) {
+	namespaceEventChan := r.namespaceRepo.Chan(ctx, func(err error) {
+		r.log.Fatalw("failed to create namespace watcher", "err", err)
+	})
+
+	ticker := time.NewTicker(reSyncInterval)
+
+	for {
+		select {
+		case n := <-namespaceEventChan:
+			r.log.Debug("updating namespace cache")
+
+			switch n.Event {
+			case repo.Change:
+				r.namespaceCache.add(n.Namespace)
+			case repo.Delete:
+				r.namespaceCache.del(n.Name)
+			default:
+				r.log.Errorw("unsupported namespace envent type", "event", n.Event.String())
+			}
+		case <-ctx.Done():
+			r.log.Infow("stopping namespace cache updater")
+
+			return
+		case <-ticker.C:
+			r.log.Debug("initiating namespace cache sync")
+
+			if err := r.initNamespaceCache(); err != nil {
+				r.log.Errorw("failed to sync namespace cache", "err", err)
+			}
+		}
+	}
 }
 
 // RegisterServer registers a server.
@@ -343,6 +373,21 @@ func (r *Registry) get(key string, numReplica int, selector string) (discovery.S
 	return result, nil
 }
 
+func (r *Registry) initNamespaceCache() error {
+	namespaces, err := r.namespaceRepo.List()
+	if err != nil {
+		return err
+	}
+
+	r.namespaceCache.reset()
+
+	for _, n := range namespaces {
+		r.namespaceCache.add(n)
+	}
+
+	return nil
+}
+
 type namespaceCache struct {
 	m          *sync.Mutex
 	namespaces map[string]discovery.Namespace
@@ -354,6 +399,12 @@ func (n *namespaceCache) hasNamespace(name string) bool {
 	n.m.Unlock()
 
 	return ok
+}
+
+func (n *namespaceCache) reset() {
+	n.m.Lock()
+	n.namespaces = map[string]discovery.Namespace{}
+	n.m.Unlock()
 }
 
 func (n *namespaceCache) list() discovery.Namespaces {

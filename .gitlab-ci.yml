@@ -1,0 +1,72 @@
+# This file is generated with create-go-app: do not edit.
+---
+variables:
+  GO111MODULE: 'on'
+  CGO_ENABLED: '0'
+  GOPATH: $CI_PROJECT_DIR/.go
+  GOPRIVATE: '*.pnet.ch'
+  GOPROXY: https://proxy.golang.org
+  http_proxy: http://outapplpf.pnet.ch:3128
+  https_proxy: http://outapplpf.pnet.ch:3128
+  no_proxy: localhost,127.0.0.1,.pnet.ch
+  DISABLE_GO_GENERATE: 'true'
+
+include:
+  - project: 'golang/create-go-app'
+    ref: master
+    file: '.gitlab-ci-include.yml'
+
+stages:
+  - pre-test
+  - test
+  - post-test
+  - pre-build
+  - build
+  - post-build
+  - pre-release
+  - release
+  - post-release
+
+tests:
+  extends: .golang-tests
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+
+check-deps:
+  extends: .check-deps
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+
+check-goreleaser-config:
+  extends: .check-goreleaser-config
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+
+# Build only when not staging or release
+build:
+  extends: .goreleaser-build
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+
+# build,test and publish to staging
+staging:
+  extends: .goreleaser-staging
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+  variables:
+    DOCKER_IMAGE_PREFIX: ${ARTIFACTORY_DOCKER_URL_STAGING}/
+  only:
+    refs:
+      - branches@postfinance/discovery
+
+
+# build,test and publish to release
+release:
+  extends: .goreleaser-release
+  image: linux-docker-local.repo.pnet.ch/pf/create-go-app:latest
+  variables:
+    DOCKER_IMAGE_PREFIX: ${ARTIFACTORY_DOCKER_URL_RELEASES}/
+  only:
+    refs:
+      - tags@postfinance/discovery
+
+changelog:
+  extends: .changelog
+
+release-notes:
+  extends: .release-notes

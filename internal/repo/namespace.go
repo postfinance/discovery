@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/postfinance/discovery"
@@ -14,6 +15,7 @@ import (
 type Namespace struct {
 	backend store.Backend
 	prefix  string
+	w       *namespaceWatcher
 }
 
 // NewNamespace creates a new namespace repo.
@@ -94,4 +96,19 @@ func (n *Namespace) List() (discovery.Namespaces, error) {
 
 func (n *Namespace) key(namespaceName string) string {
 	return path.Join(n.prefix, namespaceName)
+}
+
+func namespaceFromKey(key []byte) (*discovery.Namespace, error) {
+	k := string(key)
+	fields := strings.Split(k, "/")
+
+	if len(fields) < 2 {
+		return nil, fmt.Errorf("invalid service path: %s", k)
+	}
+
+	name := fields[len(fields)-1]
+
+	return &discovery.Namespace{
+		Name: name,
+	}, nil
 }

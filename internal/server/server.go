@@ -31,7 +31,9 @@ import (
 )
 
 const (
-	httpStopTimeout = 10 * time.Second
+	httpStopTimeout   = 10 * time.Second
+	httpClientTimeout = 10 * time.Second
+	cacheSyncInterval = 1 * time.Minute
 )
 
 var (
@@ -82,7 +84,7 @@ func (s *Server) Run(ctx context.Context) error {
 	errChan := make(chan error)
 
 	go func() {
-		if err := s.startGRPC(); err != nil {
+		if err := s.startGRPC(ctx); err != nil {
 			errChan <- err
 		}
 	}()
@@ -106,7 +108,7 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 }
 
-func (s *Server) startGRPC() error {
+func (s *Server) startGRPC(ctx context.Context) error {
 	s.l.Infow("starting grpc server")
 
 	grpcMetrics := grpc_prometheus.NewServerMetrics()
@@ -122,7 +124,7 @@ func (s *Server) startGRPC() error {
 
 	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
 
-	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, 10*time.Second, s.config.Transport)
+	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
 	if err != nil {
 		return err
 	}
@@ -162,6 +164,8 @@ func (s *Server) startGRPC() error {
 	if err != nil {
 		return err
 	}
+
+	go r.StartCacheUpdater(ctx, cacheSyncInterval)
 
 	ns, err := r.ListNamespaces()
 	if err != nil {

@@ -19,7 +19,7 @@ import (
 type exporterCmd struct {
 	Directory      string        `help:"The destination directory." default:"/tmp/discovery"`
 	Server         string        `help:"The server for which services should be exported." required:"true"`
-	ResyncInterval time.Duration `help:"The destination directory." default:"1h"`
+	ResyncInterval time.Duration `help:"The interval in that the exporter resyncs all services to filesystem." default:"1h"`
 }
 
 func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) error {
