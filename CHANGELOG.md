@@ -1,3 +1,12 @@
+## 0.2.2 (2021-02-19)
+
+
+### Bug Fixes
+
+* **discoveryd**: namespace cache works with multiple discovery instances ([#8](https://github.com/postfinance/discovery/issues/8), [548c01b5](https://github.com/postfinance/discovery/commit/548c01b5))
+
+
+
 ## 0.2.1 (2021-02-12)
 
 
