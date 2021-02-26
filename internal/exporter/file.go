@@ -27,7 +27,7 @@ type file struct {
 }
 
 func (f *file) relativePath() string {
-	return filepath.Join(f.exportCfg.String(), f.namespace, f.job) + ".json"
+	return filepath.Join(f.namespace, f.job) + ".json"
 }
 
 func (f *file) addService(s service) error {

@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/flash"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/postfinance/discovery"
-	"github.com/postfinance/discovery/internal/repo"
 )
 
 func TestEnableDisableWatch(t *testing.T) {
@@ -60,32 +60,32 @@ func TestExporter(t *testing.T) {
 		require.NoError(t, err)
 	}()
 
-	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
-	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial2.pnet.ch")
-	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial3.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial1.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial2.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial3.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Change,
 		Service: newService("i1", "changedjob", "https://initial1.pnet.ch"),
 	})
 
-	assertFileContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial2.pnet.ch")
-	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial1.pnet.ch")
-	assertFileContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial1.pnet.ch")
-	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial2.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial2.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial1.pnet.ch")
+	assertFileContains(t, filepath.Join(dir, "server1/default/changedjob.json"), "initial1.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/default/changedjob.json"), "initial2.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Change,
 		Service: newService("d1", "initial", "https://initial33.pnet.ch", "other-server1"),
 	})
-	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/initial.json"), "initial33.pnet.ch")
+	assertFileNotContains(t, filepath.Join(dir, "server1/default/initial.json"), "initial33.pnet.ch")
 
 	serviceGetter.addEvent(&repo.ServiceEvent{
 		Event:   repo.Delete,
 		Service: newService("i1", "changedjob", "https://initial1.pnet.ch"),
 	})
 
-	assertFileNotContains(t, filepath.Join(dir, "server1/standard/default/changedjob.json"), "initial") // empty
+	assertFileNotContains(t, filepath.Join(dir, "server1/default/changedjob.json"), "initial") // empty
 
 	blackboxSvc := newService("b1", "blackbox", "https://blackbox1.pnet.ch")
 	blackboxSvc.Namespace = "appl-blackbox"
@@ -94,7 +94,7 @@ func TestExporter(t *testing.T) {
 		Service: blackboxSvc,
 	})
 
-	assertFileContains(t, filepath.Join(dir, "server1/blackbox/appl-blackbox/blackbox.json"), `[{"targets":["https://blackbox1.pnet.ch"]}]`)
+	assertFileContains(t, filepath.Join(dir, "server1/appl-blackbox/blackbox.json"), `[{"targets":["https://blackbox1.pnet.ch"]}]`)
 }
 
 type serviceRepoMock struct {
