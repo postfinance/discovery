@@ -1,3 +1,12 @@
+## 0.2.3 (2021-03-11)
+
+
+### Bug Fixes
+
+* **common**: remove namespace config type from export path ([#9](https://github.com/postfinance/discovery/issues/9), [0b17742f](https://github.com/postfinance/discovery/commit/0b17742f))
+
+
+
 ## 0.2.2 (2021-02-19)
 
 
