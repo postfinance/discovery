@@ -167,17 +167,17 @@ func (g Globals) saveToken(t *auth.Token) error {
 func (g Globals) getToken() (string, error) {
 	var token string
 
-	cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID)
-	if err != nil {
-		return "", err
-	}
-
 	t, err := g.loadToken()
 	if err != nil {
 		return "", errors.Wrap(err, "login required")
 	}
 
 	if err == nil && t.MachineToken == "" {
+		cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID)
+		if err != nil {
+			return "", err
+		}
+
 		tkn := &auth.Token{
 			RefreshToken: t.RefreshToken,
 			IDToken:      t.IDToken,
