@@ -222,9 +222,50 @@ curl -X GET "http://localhost:3002/v1/namespaces" -H  "accept: application/json"
 ```
 
 ## Systemd
-It is possible to register and unregister services on start/stop with systemd. An example:
+It is possible to register and unregister services on start/stop with systemd. An example for auto registering [node_exporter](https://github.com/prometheus/node_exporter):
+
+* `/usr/lib/systemd/system/node_exporter.service`:
 
 ```
-ExecStartPost=/usr/bin/discovery register --endpoint=https://${ETCD_NAME}.pnet.ch:7002/metrics etcdv3
-ExecStopPost=/usr/bin/discovery unregister --endpoint=https://${ETCD_NAME}.pnet.ch:7002/metrics
+[Unit]
+Description=prometheus node exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/sysconfig/node_exporter
+ExecStart=/usr/bin/node_exporter --web.listen-address=${LISTEN} --log.level=${LOGLEVEL} --collector.netstat.fields=(.*) --collector.processes
+ExecStartPost=/bin/discovery service register ${DISCOVERY_NAME}
+ExecStopPost=/bin/discovery service unregister
+
+[Install]
+WantedBy=multi-user.target
 ```
+
+
+* `/etc/sysconfig/node_exporter`:
+
+```yaml
+LISTEN=:9549
+LOGLEVEL=info
+DISCOVERY_NAMESPACE=systemd
+DISCOVERY_ENDPOINT="<endpoint_url>"
+DISCOVERY_NAME=node
+```
+
+* `etc/discovery/config.yaml`:
+
+```yaml
+address: <discovery-service-url>
+oidc-endpoint: <oidc-endpoint-url>
+oidc-client-id: <oidc-endpoint-client-id>
+selector: environment=test
+```
+
+Create a token and add it to `/root/.config/discovery/.token`:
+
+```yaml
+machine_token: <jwt-token>
+```
+
+After you have run `systemctl daemon-reload` the service registers and unregisters automatically on `systemctl start|stop node_exporter`.
