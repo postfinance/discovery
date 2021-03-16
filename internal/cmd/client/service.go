@@ -67,7 +67,6 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 	}
 
 	if s.Name == "" {
-		c.PrintUsage(true)
 		return errors.New("name cannot be empty")
 	}
 
