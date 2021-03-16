@@ -205,6 +205,10 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 		return nil, err
 	}
 
+	if len(servers) == 0 {
+		return nil, ErrNotFound
+	}
+
 	s.Servers = servers.Names()
 
 	for i := range s.Servers {

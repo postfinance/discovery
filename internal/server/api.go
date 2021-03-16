@@ -74,6 +74,10 @@ func (a *API) RegisterService(ctx context.Context, req *discoveryv1.RegisterServ
 
 	svc, err := a.r.RegisterService(*s)
 	if err != nil {
+		if err == registry.ErrNotFound {
+			return nil, status.Errorf(codes.InvalidArgument, "no server found for selector '%s'", req.GetSelector())
+		}
+
 		return nil, status.Errorf(codes.Internal, "could not register service %s in store: %s", req.GetEndpoint(), err)
 	}
 

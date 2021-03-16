@@ -81,10 +81,6 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 
 	l.Infow("service registered", "id", r.GetService().GetId())
 
-	if len(r.Service.GetServers()) == 0 {
-		l.Infow("no suitable servers found - change selector if you want to export this service", "selector", r.Service.GetSelector())
-	}
-
 	return nil
 }
 
