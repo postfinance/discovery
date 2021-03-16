@@ -3,12 +3,12 @@ module github.com/postfinance/discovery
 go 1.16
 
 require (
-	github.com/alecthomas/kong v0.2.11
+	github.com/alecthomas/kong v0.2.16
 	github.com/coreos/go-oidc/v3 v3.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/golang/protobuf v1.4.3
-	github.com/google/renameio v0.1.0
+	github.com/google/renameio v1.0.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.5
@@ -19,7 +19,7 @@ require (
 	github.com/postfinance/store v0.1.3
 	github.com/prometheus/client_golang v1.9.0
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/zbindenren/king v0.0.2
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.16.0
