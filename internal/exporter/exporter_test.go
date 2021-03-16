@@ -35,18 +35,20 @@ func TestExporter(t *testing.T) {
 	ch := make(chan *repo.ServiceEvent)
 	serviceGetter := newServiceMock(ch)
 	serverGetter := newServerMock()
+	namespaceListGetter := newNamespaceMock()
 	l := flash.New()
 	l.SetDebug(true)
 	e := Exporter{
-		log:         l.Get(),
-		serverRepo:  serverGetter,
-		serviceRepo: serviceGetter,
-		destDir:     dir,
+		log:           l.Get(),
+		serverRepo:    serverGetter,
+		serviceRepo:   serviceGetter,
+		namespaceRepo: namespaceListGetter,
+		destDir:       dir,
 		destinations: files{
 			m:               &sync.Mutex{},
 			files:           map[string]*file{},
 			log:             l.Get(),
-			namespaceGetter: newNamespaceMock(),
+			namespaceGetter: namespaceListGetter,
 		},
 	}
 
@@ -181,6 +183,18 @@ func (n *namespaceRepoMock) Get(namespace string) (*discovery.Namespace, error) 
 	if !ok {
 		return nil, errors.New("not found")
 	}
+
+	return ns, nil
+}
+
+func (n *namespaceRepoMock) List() (discovery.Namespaces, error) {
+	ns := make(discovery.Namespaces, 0, len(n.namespaces))
+
+	for _, n := range n.namespaces {
+		ns = append(ns, *n)
+	}
+
+	ns.SortByName()
 
 	return ns, nil
 }

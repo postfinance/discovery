@@ -25,6 +25,7 @@ const (
 type Exporter struct {
 	serviceRepo          serviceChanLister
 	serverRepo           serverChanGetter
+	namespaceRepo        namespaceListGetter
 	log                  *zap.SugaredLogger
 	destDir              string
 	server               string
@@ -34,16 +35,19 @@ type Exporter struct {
 
 // New creates a new exporter.
 func New(b store.Backend, log *zap.SugaredLogger, destDir string) *Exporter {
+	namespaceGetter := repo.NewNamespace(b)
+
 	return &Exporter{
-		serviceRepo: repo.NewService(b),
-		serverRepo:  repo.NewServer(b),
-		log:         log,
-		destDir:     destDir,
+		serviceRepo:   repo.NewService(b),
+		serverRepo:    repo.NewServer(b),
+		namespaceRepo: namespaceGetter,
+		log:           log,
+		destDir:       destDir,
 		destinations: files{
 			m:               &sync.Mutex{},
 			files:           map[string]*file{},
 			log:             log,
-			namespaceGetter: repo.NewNamespace(b),
+			namespaceGetter: namespaceGetter,
 		},
 	}
 }
@@ -62,8 +66,18 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 	e.enableWatch()
 	e.server = server
 
-	if err := os.MkdirAll(filepath.Join(e.destDir, server), dirPermissions); err != nil {
+	namespaces, err := e.namespaceRepo.List()
+	if err != nil {
 		return err
+	}
+
+	for _, n := range namespaces {
+		dir := filepath.Join(e.destDir, server, n.Name)
+		e.log.Infow("creating export directory", "path", dir)
+
+		if err := os.MkdirAll(dir, dirPermissions); err != nil {
+			return err
+		}
 	}
 
 	errHandler := func(err error) {
@@ -247,6 +261,11 @@ type serviceChanLister interface {
 type serverChanGetter interface {
 	Get(serverName string) (*discovery.Server, error)
 	Chan(context.Context, func(error)) <-chan *repo.ServerEvent
+}
+
+type namespaceListGetter interface {
+	namespaceGetter
+	List() (discovery.Namespaces, error)
 }
 
 type namespaceGetter interface {
