@@ -23,10 +23,10 @@ import (
 // CLI is the client command.
 type CLI struct {
 	Globals
-	Server    serverCmd    `cmd:"" help:"Register and unregister servers."`
+	Server    serverCmd    `cmd:"" help:"Register and unregister servers." aliases:"srv"`
 	Login     loginCmd     `cmd:"" help:"Perform OIDC login."`
-	Service   serviceCmd   `cmd:"" help:"Register and unregister services."`
-	Namespace namespaceCmd `cmd:"" help:"Register and unregister namespaces."`
+	Service   serviceCmd   `cmd:"" help:"Register and unregister services." aliases:"svc"`
+	Namespace namespaceCmd `cmd:"" help:"Register and unregister namespaces." aliases:"ns"`
 	Import    importCmd    `cmd:"" help:"Import new services"`
 	Token     tokenCmd     `cmd:"" help:"Manage access tokens"`
 }
