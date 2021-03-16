@@ -1,3 +1,24 @@
+## 0.3.0 (2021-03-16)
+
+
+### Bug Fixes
+
+* **common**: cli returns error (instead of warning) when server is found ([#10](https://github.com/postfinance/discovery/issues/10), [e2300ce7](https://github.com/postfinance/discovery/commit/e2300ce7))
+  > When registering a service with a selector that would result in a
+  > service registration without corresponding server, the command
+  > fails with `no server found for selector '<selector>'` error message.
+* **common**: correctly use environment variable `DISOVERY_NAME` for service name ([#12](https://github.com/postfinance/discovery/issues/12), [af3c41b9](https://github.com/postfinance/discovery/commit/af3c41b9))
+* **discovery**: do not start oidc client for machine tokens ([7a4f447b](https://github.com/postfinance/discovery/commit/7a4f447b))
+* **discovery**: not printing usage when service name is empty ([671d3cee](https://github.com/postfinance/discovery/commit/671d3cee))
+* **exporter**: create namespace export directories on startup ([#11](https://github.com/postfinance/discovery/issues/11), [aa7895df](https://github.com/postfinance/discovery/commit/aa7895df))
+
+
+### New Features
+
+* **discovery**: add command aliases ns, svc and svr ([32d1f51a](https://github.com/postfinance/discovery/commit/32d1f51a))
+
+
+
 ## 0.2.3 (2021-03-11)
 
 
