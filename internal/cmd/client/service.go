@@ -1,6 +1,7 @@
 package client
 
 import (
+	"errors"
 	"os"
 
 	"github.com/alecthomas/kong"
@@ -53,7 +54,7 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 
 type serviceRegister struct {
 	Endpoint  string            `short:"e" help:"The endpoint URL." required:"true"`
-	Name      string            `arg:"true" help:"The service name. This will represent the job name in prometheus." required:"true"`
+	Name      string            `arg:"true" optional:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
 	Labels    map[string]string `short:"l" help:"Labels for the service." mapsep:","`
 	Namespace string            `short:"n" help:"The namespace for the service" default:"default" required:"true"`
 	Selector  string            `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
@@ -63,6 +64,11 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 	cli, err := g.serviceClient()
 	if err != nil {
 		return err
+	}
+
+	if s.Name == "" {
+		c.PrintUsage(true)
+		return errors.New("name cannot be empty")
 	}
 
 	ctx, cancel := g.ctx()
