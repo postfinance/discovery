@@ -25,7 +25,7 @@ where no prometheus service discovery other than [file-sd](https://prometheus.io
 The service discovery consists of three components:
 
 * A GPRC service to register services and store them to [etcd](https://etcd.io) backend.
-* An exporter service to export stored services to filesystem for promehteus [file-sd](https://prometheus.io/docs/guides/file-sd/).
+* An exporter service to export stored services to filesystem for prometheus [file-sd](https://prometheus.io/docs/guides/file-sd/).
 * CLI to register or unregister services and perform admin tasks.
 
 ## Example Workflow:
@@ -35,7 +35,7 @@ First we have to register a (prometheus) server:
 ```console
 $ discovery server register prometheus1.example.com --labels=environment=test
 ```
-The labels above can be used on service registration to select a server via kubernetes style label selecors (see below).
+The labels above can be used on service registration to select a server via kubernetes style label selectors (see below).
 
 To list all registered servers:
 ```console
@@ -99,8 +99,8 @@ Now you can start the exporter service on the corresponding prometheus server:
 $ discoveryd exporter --directory=/tmp/discovery --server=prometheus1.example.com
 2021-02-05T09:08:29.671+0100    INFO    server/exporter.go:28   starting exporter       {"buildinfo-date": "2021-02-04T06:48:33Z", "buildinfo-go": "go1.15.5", "buildinfo-revision": "1c8d0652", "buildinfo-version": "v0.1.0-SNAPSHOT-1c8d065", "debug": false, "directory": "/tmp/discovery", "etcd-auto-sync-interval": "10s", "etcd-ca": "", "etcd-ca-file": "", "etcd-cert": "", "etcd-cert-file": "", "etcd-dial-timeout": "5s", "etcd-endpoints": ["localhost:2379"], "etcd-key": "", "etcd-key-file": "", "etcd-password": "", "etcd-prefix": "/discovery", "etcd-request-timeout": "5s", "etcd-user": "", "profiler-enabled": false, "profiler-listen": ":6666", "profiler-timeout": "5m0s", "resync-interval": "1h0m0s", "server": "prometheus1.example.com", "show-config": false}
 2021-02-05T09:08:29.675+0100    INFO    exporter/exporter.go:76 sync services
-2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/blackbox/default-blackbox/blackbox.json"}
-2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/standard/default/example.json"}
+2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/default-blackbox/blackbox.json"}
+2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/default/example.json"}
 ```
 
 As you can see, the exporter created two files which can be used by prometheus for file_sd. The created files have different content depending on the namespace export configuration (`standard` or `blackbox`):
@@ -172,6 +172,14 @@ id: ansible-user
 namespaces: [default default-blackbox]
 expiry: never
 ```
+
+You can use the created token for automating tasks. You can set the token as follows in `~/.config/discovery/.token`:
+
+```yaml
+machine_token: <generated jwt token>
+```
+
+With the above token you can regster services only (no namespaces or servers can be registered)
 
 ## Configuration
 
