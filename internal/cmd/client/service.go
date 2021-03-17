@@ -53,7 +53,7 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 }
 
 type serviceRegister struct {
-	Endpoint  string            `short:"e" help:"The endpoint URL." required:"true"`
+	Endpoints []string          `short:"e" help:"The service endpoint URLs." required:"true"`
 	Name      string            `arg:"true" optional:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
 	Labels    map[string]string `short:"l" help:"Labels for the service." mapsep:","`
 	Namespace string            `short:"n" help:"The namespace for the service" default:"default" required:"true"`
@@ -70,27 +70,32 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		return errors.New("name cannot be empty")
 	}
 
-	ctx, cancel := g.ctx()
-	defer cancel()
+	var lastErr error
 
-	r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
-		Name:      s.Name,
-		Namespace: s.Namespace,
-		Endpoint:  s.Endpoint,
-		Labels:    s.Labels,
-		Selector:  s.Selector,
-	})
-	if err != nil {
-		return err
+	for _, ep := range s.Endpoints {
+		ctx, cancel := g.ctx()
+		defer cancel()
+
+		r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
+			Name:      s.Name,
+			Namespace: s.Namespace,
+			Endpoint:  ep,
+			Labels:    s.Labels,
+			Selector:  s.Selector,
+		})
+		if err != nil {
+			lastErr = err
+			l.Errorw("failed to unregister", "service", ep, "err", err)
+		}
+
+		l.Infow("service registered", "id", r.GetService().GetId())
 	}
 
-	l.Infow("service registered", "id", r.GetService().GetId())
-
-	return nil
+	return lastErr
 }
 
 type serviceUnRegister struct {
-	Services  []string `arg:"true" help:"The service endpoint URL or ID." required:"true"`
+	Endpoints []string `arg:"true" optional:"true" help:"The service endpoint URLs or IDs." env:"DISCOVERY_ENDPOINTS"`
 	Namespace string   `short:"n" help:"The namespace for the service" default:"default" required:"true"`
 }
 
@@ -102,18 +107,18 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 
 	var lastErr error
 
-	for _, svc := range s.Services {
+	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
 		defer cancel()
 
 		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
 			Namespace: s.Namespace,
-			Id:        svc,
+			Id:        ep,
 		})
 
 		if err != nil {
 			lastErr = err
-			l.Errorw("failed to unregister", "service", svc, "err", err)
+			l.Errorw("failed to unregister", "service", ep, "err", err)
 		}
 	}
 
