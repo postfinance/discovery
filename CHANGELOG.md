@@ -1,3 +1,15 @@
+## 0.4.0 (2021-03-17)
+
+
+### New Features
+
+* **discovery**: allow to register multiple endpoints at once ([4dde6860](https://github.com/postfinance/discovery/commit/4dde6860))
+  > In the `service unregister` subcommand, we also changed the environment variable from
+  > `DISCOVERY_SERVICES` to `DISCOVERY_ENDPOINTS`. This makes the
+  > register and unregister subcommands more consistent.
+
+
+
 ## 0.3.0 (2021-03-16)
 
 
