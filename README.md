@@ -243,8 +243,8 @@ After=network-online.target
 [Service]
 EnvironmentFile=/etc/sysconfig/node_exporter
 ExecStart=/usr/bin/node_exporter --web.listen-address=${LISTEN} --log.level=${LOGLEVEL} --collector.netstat.fields=(.*) --collector.processes
-ExecStartPost=/bin/discovery service register ${DISCOVERY_NAME}
-ExecStopPost=/bin/discovery service unregister
+ExecStartPost=-/bin/discovery service register ${DISCOVERY_NAME}
+ExecStopPost=-/bin/discovery service unregister
 
 [Install]
 WantedBy=multi-user.target
@@ -257,7 +257,7 @@ WantedBy=multi-user.target
 LISTEN=:9549
 LOGLEVEL=info
 DISCOVERY_NAMESPACE=systemd
-DISCOVERY_ENDPOINT="<endpoint_url>"
+DISCOVERY_ENDPOINTS="<endpoint_url>"
 DISCOVERY_NAME=node
 ```
 
