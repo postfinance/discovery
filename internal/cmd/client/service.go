@@ -3,12 +3,15 @@ package client
 import (
 	"errors"
 	"os"
+	"regexp"
 
 	"github.com/alecthomas/kong"
+	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 type serviceCmd struct {
@@ -18,9 +21,10 @@ type serviceCmd struct {
 }
 
 type serviceList struct {
-	Output    string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
-	NoHeaders bool   `short:"N" help:"Do not print headers."`
-	Namespace string `short:"n" help:"If not empty only serices for a namespace are listed."`
+	Output        string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
+	Headers       bool   `short:"H" help:"Show headers."`
+	Namespace     string `short:"n" help:"Filter services by namespace."`
+	serviceFilter `prefix:"filter-"`
 }
 
 func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
@@ -41,9 +45,18 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 
 	services := convert.ServicesFromPB(r.GetServices())
 
+	filters, err := s.serviceFilter.filters()
+	if err != nil {
+		return err
+	}
+
+	if len(filters) > 0 {
+		services = services.Filter(filters...)
+	}
+
 	sw := sfmt.SliceWriter{
 		Writer:    os.Stdout,
-		NoHeaders: s.NoHeaders,
+		NoHeaders: !s.Headers,
 	}
 	f := sfmt.ParseFormat(s.Output)
 
@@ -123,4 +136,53 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 	}
 
 	return lastErr
+}
+
+type serviceFilter struct {
+	Name     string `short:"N" help:"Filter services by job name (regular expression)."`
+	Server   string `short:"S" help:"Filter services by server name (regular expression)."`
+	Endpoint string `short:"e" help:"Filter services by endpoint (regular expression)."`
+	Selector string `short:"s" help:"Filter services by selector."`
+}
+
+func (s serviceFilter) filters() ([]discovery.FilterFunc, error) {
+	filters := []discovery.FilterFunc{}
+
+	if s.Name != "" {
+		r, err := regexp.Compile(s.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		filters = append(filters, discovery.ServiceByName(r))
+	}
+
+	if s.Endpoint != "" {
+		r, err := regexp.Compile(s.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		filters = append(filters, discovery.ServiceByEndpoint(r))
+	}
+
+	if s.Server != "" {
+		r, err := regexp.Compile(s.Server)
+		if err != nil {
+			return nil, err
+		}
+
+		filters = append(filters, discovery.ServiceByServer(r))
+	}
+
+	if s.Selector != "" {
+		sel, err := labels.Parse(s.Selector)
+		if err != nil {
+			return nil, err
+		}
+
+		filters = append(filters, discovery.ServiceBySelector(sel))
+	}
+
+	return filters, nil
 }

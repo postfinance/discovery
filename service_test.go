@@ -3,6 +3,7 @@ package discovery
 import (
 	"encoding/json"
 	"net/url"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -248,4 +249,70 @@ func TestMarshalService(t *testing.T) {
 	err = json.Unmarshal(d, &ns)
 	require.NoError(t, err)
 	assert.Equal(t, s, ns)
+}
+
+func TestFilterService(t *testing.T) {
+	services := Services{
+		Service{
+			Name:     "service1",
+			Endpoint: mustParseRequestURI("http://example1.pnet.ch/metrics"),
+			Servers:  []string{"server1", "server2"},
+		},
+		Service{
+			Name:     "service1",
+			Endpoint: mustParseRequestURI("http://example2.pnet.ch/metrics"),
+			Servers:  []string{"server2", "server3"},
+		},
+		Service{
+			Name:     "service2",
+			Endpoint: mustParseRequestURI("http://example3.pnet.ch/metrics"),
+			Servers:  []string{"server1", "server2"},
+		},
+	}
+
+	var tt = []struct {
+		filters     []FilterFunc
+		expectedLen int
+	}{
+		{
+			[]FilterFunc{ServiceByName(regexp.MustCompile("1"))},
+			2,
+		},
+		{
+			[]FilterFunc{ServiceByName(regexp.MustCompile("service"))},
+			3,
+		},
+		{
+			[]FilterFunc{ServiceByName(regexp.MustCompile("service")), ServiceByServer(regexp.MustCompile("3"))},
+			1,
+		},
+		{
+			[]FilterFunc{ServiceByName(regexp.MustCompile("service")), ServiceByServer(regexp.MustCompile("3")), ServiceByEndpoint(regexp.MustCompile("2"))},
+			1,
+		},
+		{
+			[]FilterFunc{ServiceByName(regexp.MustCompile("service")), ServiceByServer(regexp.MustCompile("3")), ServiceByEndpoint(regexp.MustCompile("1"))},
+			0,
+		},
+		{
+			[]FilterFunc{},
+			3,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run("", func(t *testing.T) {
+			assert.Len(t, services.Filter(tc.filters...), tc.expectedLen)
+		})
+	}
+
+}
+
+func mustParseRequestURI(rawURL string) *url.URL {
+	u, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		panic(err)
+	}
+
+	return u
 }

@@ -17,8 +17,8 @@ type serverCmd struct {
 }
 
 type serverList struct {
-	Output    string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
-	NoHeaders bool   `short:"N" help:"Do not print headers."`
+	Output  string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
+	Headers bool   `short:"H" help:"Show headers."`
 }
 
 //nolint: dupl // it does not the same as namespaceList command
@@ -40,7 +40,7 @@ func (s serverList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error
 
 	sw := sfmt.SliceWriter{
 		Writer:    os.Stdout,
-		NoHeaders: s.NoHeaders,
+		NoHeaders: !s.Headers,
 	}
 	f := sfmt.ParseFormat(s.Output)
 

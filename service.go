@@ -183,15 +183,24 @@ func (s Service) MarshalJSON() ([]byte, error) {
 	return json.Marshal(raw)
 }
 
-// Services is a slice of Serices
+// Services is a slice of Services
 type Services []Service
 
-// Filter filters Services.
-func (s Services) Filter(f func(Service) bool) Services {
+// FilterFunc is a function to filter services. If function returns true
+// service is selected else omitted.
+type FilterFunc func(Service) bool
+
+// Filter filters Services with FilterFunc.
+func (s Services) Filter(filters ...FilterFunc) Services {
 	services := Services{}
 
 	for i := range s {
-		if f(s[i]) {
+		selectService := true
+		for _, f := range filters {
+			selectService = selectService && f(s[i])
+		}
+
+		if selectService {
 			services = append(services, s[i])
 		}
 	}
@@ -200,21 +209,34 @@ func (s Services) Filter(f func(Service) bool) Services {
 }
 
 // ServiceByName filters Services by Name.
-func ServiceByName(name string) func(Service) bool {
+func ServiceByName(r *regexp.Regexp) FilterFunc {
 	return func(s Service) bool {
-		return name == s.Name
+		return r.MatchString(s.Name)
 	}
 }
 
 // ServiceByEndpoint filters Services by Endpoint.
-func ServiceByEndpoint(e fmt.Stringer) func(Service) bool {
+func ServiceByEndpoint(r *regexp.Regexp) FilterFunc {
 	return func(s Service) bool {
-		return e.String() == s.Endpoint.String()
+		return r.MatchString(s.Endpoint.String())
+	}
+}
+
+// ServiceByServer filters Services by Server.
+func ServiceByServer(r *regexp.Regexp) FilterFunc {
+	return func(s Service) bool {
+		for _, srv := range s.Servers {
+			if r.MatchString(srv) {
+				return true
+			}
+		}
+
+		return false
 	}
 }
 
 // ServiceBySelector filters Services by Selector.
-func ServiceBySelector(selector labels.Selector) func(Service) bool {
+func ServiceBySelector(selector labels.Selector) FilterFunc {
 	return func(s Service) bool {
 		return selector.Matches(s.Labels)
 	}

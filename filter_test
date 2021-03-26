@@ -1,0 +1,46 @@
+package pfnet
+
+import (
+	"testing"
+
+	"git.pnet.ch/golang/pfnetman/pkg/environment"
+	"git.pnet.ch/golang/pfnetman/pkg/location"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestFilter(t *testing.T) {
+	s := Subnets{
+		Subnet{
+			Name:        "s1",
+			Environment: environment.EIT1,
+			VLAN:        1235,
+		},
+		Subnet{
+			Name:        "s2",
+			Environment: environment.E1,
+		},
+		Subnet{
+			Name:        "s3",
+			Environment: environment.E1,
+			NetworkZone: &NetworkZone{
+				Location: location.BE,
+				Name:     "nz11",
+			},
+			VLAN:   1234,
+			Locked: true,
+		},
+	}
+	f := Filter{
+		Names:        []string{"s1", "s3"},
+		Environments: []environment.Environment{environment.E1, environment.EIT1},
+		Locations:    []location.Location{location.BE},
+		VLANs:        []string{"12"},
+		Locked:       BoolPtr(true),
+		Networkzones: []string{"nz1"},
+	}
+
+	fi := NewFilter(&f)
+
+	assert.Len(t, s.Filter(fi), 1)
+	assert.Equal(t, s.Filter(fi)[0], s[2])
+}
