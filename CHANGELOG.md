@@ -1,3 +1,14 @@
+## 0.4.1 (2021-03-26)
+
+
+### Bug Fixes
+
+* **rest**: use URL query parameter to unregister service by endpoint ([f0a82b74](https://github.com/postfinance/discovery/commit/f0a82b74))
+  > It is now possible to unregister a service by endpoint URL. Previously it was only possible to unregister
+  > a service via REST by ID.
+
+
+
 ## 0.4.0 (2021-03-17)
 
 
