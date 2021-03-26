@@ -23,7 +23,7 @@ service ServiceAPI {
   // UnRegisterService unregisters a service.
   rpc UnRegisterService(UnRegisterServiceRequest) returns (UnRegisterServiceResponse) {
     option (google.api.http) = {
-      delete: "/v1/services/{namespace}/{id}"
+      delete: "/v1/services/{namespace}"
     };
   }
   // ListService lists all services.

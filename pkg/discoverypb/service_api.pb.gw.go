@@ -62,6 +62,10 @@ func local_request_ServiceAPI_RegisterService_0(ctx context.Context, marshaler r
 
 }
 
+var (
+	filter_ServiceAPI_UnRegisterService_0 = &utilities.DoubleArray{Encoding: map[string]int{"namespace": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+)
+
 func request_ServiceAPI_UnRegisterService_0(ctx context.Context, marshaler runtime.Marshaler, client ServiceAPIClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UnRegisterServiceRequest
 	var metadata runtime.ServerMetadata
@@ -84,15 +88,11 @@ func request_ServiceAPI_UnRegisterService_0(ctx context.Context, marshaler runti
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "namespace", err)
 	}
 
-	val, ok = pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	protoReq.Id, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_ServiceAPI_UnRegisterService_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.UnRegisterService(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -122,15 +122,8 @@ func local_request_ServiceAPI_UnRegisterService_0(ctx context.Context, marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "namespace", err)
 	}
 
-	val, ok = pathParams["id"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "id")
-	}
-
-	protoReq.Id, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "id", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.URL.Query(), filter_ServiceAPI_UnRegisterService_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.UnRegisterService(ctx, &protoReq)
@@ -343,7 +336,7 @@ func RegisterServiceAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 var (
 	pattern_ServiceAPI_RegisterService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "services"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_ServiceAPI_UnRegisterService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "services", "namespace", "id"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_ServiceAPI_UnRegisterService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "services", "namespace"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_ServiceAPI_ListService_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "services"}, "", runtime.AssumeColonVerbOpt(true)))
 )

@@ -229,6 +229,18 @@ To access the API you have to set an authorization header:
 curl -X GET "http://localhost:3002/v1/namespaces" -H  "accept: application/json" -H " -H "authorization: bearer <token>""
 ```
 
+To unregister a service by endpoint URL run:
+
+```console
+curl -G -v -X DELETE --data-urlencode "id=http://example.com:9182/metrics" -H "accept: application/json" -H "authorization: bearer $TOKEN" http://localhost:3002/v1/services/windows
+```
+
+which is the same as:
+
+```console
+curl -v -X DELETE -H "accept: application/json" -H "authorization: bearer $TOKEN" 'http://localhost:3002/v1/services/windows?id=http%3A%2F%2Fexample.com%3A9182%2Fmetrics'
+```
+
 ## Systemd
 It is possible to register and unregister services on start/stop with systemd. An example for auto registering [node_exporter](https://github.com/prometheus/node_exporter):
 
