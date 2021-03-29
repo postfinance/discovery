@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"regexp"
 
@@ -22,6 +23,7 @@ type serviceCmd struct {
 
 type serviceList struct {
 	Output        string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
+	SortBy        string `default:"endpoint" help:"Sort services by endpoint or modification date (allowed values: endpoint or date)" enum:"endpoint,date"`
 	Headers       bool   `short:"H" help:"Show headers."`
 	Namespace     string `short:"n" help:"Filter services by namespace."`
 	serviceFilter `prefix:"filter-"`
@@ -52,6 +54,15 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 
 	if len(filters) > 0 {
 		services = services.Filter(filters...)
+	}
+
+	switch s.SortBy {
+	case "endpoint":
+		services.SortByEndpoint()
+	case "date":
+		services.SortByDate()
+	default:
+		return fmt.Errorf("unsupported sort type '%s'", s.SortBy)
 	}
 
 	sw := sfmt.SliceWriter{

@@ -242,6 +242,20 @@ func ServiceBySelector(selector labels.Selector) FilterFunc {
 	}
 }
 
+// SortByEndpoint sorts services by endpoint.
+func (s Services) SortByEndpoint() {
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].Endpoint.String() < s[j].Endpoint.String()
+	})
+}
+
+// SortByDate sorts servers by modification date.
+func (s Services) SortByDate() {
+	sort.Slice(s, func(i, j int) bool {
+		return s[j].Modified.Before(s[i].Modified)
+	})
+}
+
 // Labels represents key value pairs.
 type Labels map[string]string
 

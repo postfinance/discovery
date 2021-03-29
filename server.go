@@ -62,7 +62,7 @@ func (s Servers) SortByName() {
 	})
 }
 
-// SortByDate sorts servers by registerdate.
+// SortByDate sorts servers by modification date.
 func (s Servers) SortByDate() {
 	sort.Slice(s, func(i, j int) bool {
 		return s[j].Modified.Before(s[i].Modified)
