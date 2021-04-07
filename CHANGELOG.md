@@ -1,3 +1,18 @@
+## 0.5.0 (2021-04-07)
+
+
+### Bug Fixes
+
+* **exporter**: remove service from export file on unregister ([#16](https://github.com/postfinance/discovery/issues/16), [bb56b1ed](https://github.com/postfinance/discovery/commit/bb56b1ed))
+
+
+### New Features
+
+* **cli**: add possibility to filter services ([#15](https://github.com/postfinance/discovery/issues/15), [b0859607](https://github.com/postfinance/discovery/commit/b0859607))
+* **cli**: add possibility to sort services by endpoint or modification date ([08575b30](https://github.com/postfinance/discovery/commit/08575b30))
+
+
+
 ## 0.4.1 (2021-03-26)
 
 
