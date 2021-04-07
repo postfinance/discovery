@@ -130,7 +130,7 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 }
 
 func (e *Exporter) handleService(event *repo.ServiceEvent) {
-	ignore := !event.Service.HasServer(e.server)
+	ignore := !event.Service.HasServer(e.server) && event.Event == repo.Change
 	msg := append([]interface{}{
 		"event", event.Event.String(),
 		"ignore", ignore,
