@@ -1,3 +1,12 @@
+## 0.5.1 (2021-04-13)
+
+
+### Bug Fixes
+
+* **common**: update to newest gprc version ([2e97b74c](https://github.com/postfinance/discovery/commit/2e97b74c))
+
+
+
 ## 0.5.0 (2021-04-07)
 
 
