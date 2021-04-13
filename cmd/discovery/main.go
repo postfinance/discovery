@@ -30,7 +30,7 @@ func main() {
 	app := kong.Parse(&cli, king.DefaultOptions(
 		king.Config{
 			Name:        "discovery",
-			Description: "TBD",
+			Description: "GRPC client for discovery service.",
 			BuildInfo:   b,
 		},
 	)...)
