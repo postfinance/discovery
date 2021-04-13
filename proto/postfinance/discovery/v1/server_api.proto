@@ -1,14 +1,13 @@
 syntax = "proto3";
 
-
 package postfinance.discovery.v1;
 
-option go_package = "discoveryv1";
+option go_package = "postfinance/discovery/v1;discoveryv1";
 option java_multiple_files = true;
 option java_outer_classname = "ServerApiProto";
 option java_package = "ch.postfinance.discovery.v1";
 
-import "server.proto";
+import "postfinance/discovery/v1/server.proto";
 import "google/api/annotations.proto";
 
 // ServerAPI is responsible for registering and unregistering servers.

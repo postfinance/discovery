@@ -2,3 +2,4 @@ proto/local
 dist/
 .a*
 discovery*.yml
+bin/

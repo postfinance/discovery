@@ -6,7 +6,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery/internal/server/convert"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"go.uber.org/zap"
 )
 

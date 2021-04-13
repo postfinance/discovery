@@ -206,7 +206,7 @@ oidc-endpoint: https://auth.example.com/auth/realms/discovery
 ## API
 
 ### GRPC
-The service discovery has a GRPC API. The proto files can be found [here](./pkg/discoverypb). The generated GRPC go code is also in that directory. To send the authorization token with the go client you
+The service discovery has a GRPC API. The proto files can be found [here](./proto/postfinance/discovery/v1). The generated GRPC go code is also in that directory. To send the authorization token with the go client you
 can use an [UnaryClientInterceptor](https://github.com/grpc/grpc-go/blob/master/interceptor.go) like below:
 
 ```go

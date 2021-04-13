@@ -9,7 +9,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/server/convert"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/labels"

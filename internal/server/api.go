@@ -9,15 +9,19 @@ import (
 	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
 	"github.com/postfinance/discovery/internal/server/convert"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 // API implements the GRPC API.
 type API struct {
-	r            *registry.Registry
-	tokenHandler *auth.TokenHandler
+	discoveryv1.UnsafeNamespaceAPIServer // requires you to implement all gRPC services
+	discoveryv1.UnsafeServerAPIServer    // requires you to implement all gRPC services
+	discoveryv1.UnsafeServiceAPIServer   // requires you to implement all gRPC services
+	discoveryv1.UnsafeTokenAPIServer     // requires you to implement all gRPC services
+	r                                    *registry.Registry
+	tokenHandler                         *auth.TokenHandler
 }
 
 // RegisterServer registers a server.

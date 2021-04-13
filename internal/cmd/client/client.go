@@ -12,7 +12,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/pkg/errors"
 	"github.com/postfinance/discovery/internal/auth"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"github.com/zbindenren/king"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

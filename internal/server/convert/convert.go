@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/postfinance/discovery"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb"
+	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 )
 
 // NamespaceToPB converts *discovery.Namespace to *discoveryv1.Namespace.

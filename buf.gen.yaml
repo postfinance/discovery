@@ -1,0 +1,15 @@
+---
+version: v1beta1
+plugins:
+  - name: go
+    out: pkg/discoverypb
+    opt: paths=source_relative
+    path: ./bin/protoc-gen-go
+  - name: go-grpc
+    out: pkg/discoverypb
+    opt: paths=source_relative
+    path: ./bin/protoc-gen-go-grpc
+  - name: grpc-gateway
+    out: pkg/discoverypb
+    opt: paths=source_relative
+    path: ./bin/protoc-gen-grpc-gateway

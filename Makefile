@@ -12,6 +12,11 @@ GO_VERSION := $(shell (go version | awk '{print $$3;}'))
 BINARIES := $(shell find ./dist ! -name '*goreleaserdocker*' -path '*_linux_*' -type f -executable)
 GORELEASER := 0.156.1
 GOLANGCI := 1.36.0
+PROTOC_BUF := 0.41.0
+PROTOC := 3.15.8
+PROTOC_GEN_GO := 1.26.0
+PROTOC_GEN_GRPC_GO := 1.1.0
+PROTOC_GEN_GRPC_GATEWAY := 2.1.0
 
 ## build: build the binaries only
 build:
@@ -25,6 +30,7 @@ snapshot:
 clean:
 	rm -rf ./dist
 	rm -rf ./downloads
+	rm -rf ./bin
 
 ## download:  installs goreleaser and golangci-lint in the correct version to ~/bin
 download: download-goreleaser download-golangci-lint
@@ -61,3 +67,38 @@ download-golangci-lint:
 	cd downloads && tar -xvf golangci-lint-linux-amd64.tar.gz
 	mkdir -p $(INSTALL_DIR) && install downloads/golangci-lint-$(GOLANGCI)-linux-amd64/golangci-lint $(INSTALL_DIR)
 	rm -rf downloads
+
+protoc-lint: bin/buf
+	./bin/buf lint
+
+## protoc-generate-go: create go protoc stubs
+protoc-generate-go: bin/buf bin/protoc bin/protoc-gen-go-grpc bin/protoc-gen-grpc-gateway bin/protoc-gen-go
+	./bin/buf generate --path=proto/postfinance
+
+bin:
+	mkdir bin
+
+bin/protoc: bin
+	curl -sLo protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v$(PROTOC)/protoc-$(PROTOC)-linux-x86_64.zip
+	unzip -o protoc.zip bin/protoc
+	touch bin/protoc
+	rm protoc.zip
+
+bin/buf: bin
+	curl -sLo - https://github.com/bufbuild/buf/releases/download/v$(PROTOC_BUF)/buf-Linux-x86_64.tar.gz | tar -C bin --strip-components=2 -xvzf - buf/bin/buf
+	chmod +x bin/buf
+	touch bin/buf
+
+bin/protoc-gen-go: bin
+	curl -sLo - https://github.com/protocolbuffers/protobuf-go/releases/download/v$(PROTOC_GEN_GO)/protoc-gen-go.v$(PROTOC_GEN_GO).linux.amd64.tar.gz | tar -xvz -C bin
+	chmod +x bin/protoc-gen-go
+	touch bin/protoc-gen-go
+
+bin/protoc-gen-go-grpc: bin
+	curl -sLo - https://github.com/grpc/grpc-go/releases/download/cmd%2Fprotoc-gen-go-grpc%2Fv$(PROTOC_GEN_GRPC_GO)/protoc-gen-go-grpc.v$(PROTOC_GEN_GRPC_GO).linux.amd64.tar.gz | tar -C bin -xvzf - ./protoc-gen-go-grpc
+	chmod +x bin/protoc-gen-go-grpc
+	touch bin/protoc-gen-go-grpc
+
+bin/protoc-gen-grpc-gateway: bin
+	curl -sLo bin/protoc-gen-grpc-gateway https://github.com/grpc-ecosystem/grpc-gateway/releases/download/v$(PROTOC_GEN_GRPC_GATEWAY)/protoc-gen-grpc-gateway-v$(PROTOC_GEN_GRPC_GATEWAY)-linux-x86_64
+	chmod +x bin/protoc-gen-grpc-gateway
