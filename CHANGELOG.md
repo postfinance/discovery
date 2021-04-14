@@ -1,3 +1,13 @@
+## 0.5.2 (2021-04-14)
+
+
+### Bug Fixes
+
+* **common**: update kong dependency to master ([#17](https://github.com/postfinance/discovery/issues/17), [c24f227d](https://github.com/postfinance/discovery/commit/c24f227d))
+* **common**: use correct command description for server and client ([978e507e](https://github.com/postfinance/discovery/commit/978e507e))
+
+
+
 ## 0.5.1 (2021-04-13)
 
 
