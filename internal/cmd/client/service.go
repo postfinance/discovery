@@ -77,11 +77,11 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 }
 
 type serviceRegister struct {
-	Endpoints []string          `short:"e" help:"The service endpoint URLs." required:"true"`
-	Name      string            `arg:"true" optional:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
-	Labels    map[string]string `short:"l" help:"Labels for the service." mapsep:","`
-	Namespace string            `short:"n" help:"The namespace for the service" default:"default" required:"true"`
-	Selector  string            `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
+	Endpoints []string         `short:"e" help:"The service endpoint URLs." required:"true"`
+	Name      string           `arg:"true" optional:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
+	Labels    discovery.Labels `short:"l" help:"Labels for the service." mapsep:","`
+	Namespace string           `short:"n" help:"The namespace for the service" default:"default" required:"true"`
+	Selector  string           `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
 }
 
 func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
@@ -109,13 +109,19 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		})
 		if err != nil {
 			lastErr = err
-			l.Errorw("failed to unregister", "service", ep, "err", err)
+			l.Errorw("failed to register", "service", ep, "err", err)
+
+			continue
 		}
 
 		l.Infow("service registered", "id", r.GetService().GetId())
 	}
 
-	return lastErr
+	if lastErr != nil {
+		return errors.New("register service failed")
+	}
+
+	return nil
 }
 
 type serviceUnRegister struct {
@@ -143,10 +149,16 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		if err != nil {
 			lastErr = err
 			l.Errorw("failed to unregister", "service", ep, "err", err)
+
+			continue
 		}
 	}
 
-	return lastErr
+	if lastErr != nil {
+		return errors.New("unregister service failed")
+	}
+
+	return nil
 }
 
 type serviceFilter struct {

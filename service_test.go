@@ -308,6 +308,46 @@ func TestFilterService(t *testing.T) {
 
 }
 
+func TestLabelValidate(t *testing.T) {
+	var tt = []struct {
+		labels      Labels
+		expectError bool
+	}{
+		{
+			Labels{},
+			false,
+		},
+		{
+			Labels{"is_valid_1": "value"},
+			false,
+		},
+		{
+			Labels{"is invalid": "value"},
+			true,
+		},
+		{
+			Labels{"inv@lid": "value"},
+			true,
+		},
+		{
+			Labels{"invalid_empty_value": ""},
+			true,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.labels.String(), func(t *testing.T) {
+			err := tc.labels.Validate()
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
 func mustParseRequestURI(rawURL string) *url.URL {
 	u, err := url.ParseRequestURI(rawURL)
 	if err != nil {

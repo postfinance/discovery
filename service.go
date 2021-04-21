@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	nameRegexp = regexp.MustCompile("^[[:alnum:]_-]+$")
+	nameRegexp  = regexp.MustCompile("^[[:alnum:]_-]+$")
+	labelRegexp = regexp.MustCompile("[a-zA-Z_][a-zA-Z0-9_]*.")
 )
 
 // Service contains all information for service discovery.
@@ -84,7 +85,7 @@ func (s Service) Validate() error {
 		return errors.New("endpoint cannot be null")
 	}
 
-	return nil
+	return s.Labels.Validate()
 }
 
 // HasServer returns true if service has serverName in its Servers slice.
@@ -256,6 +257,19 @@ func (s Services) SortByDate() {
 	})
 }
 
+// KeyVals represents the service as slice of interface.
+func (s Service) KeyVals() []interface{} {
+	return []interface{}{
+		"id", s.ID,
+		"name", s.Name,
+		"namespace", s.Namespace,
+		"endpoint", s.Endpoint,
+		"modified", s.Modified,
+		"selector", s.Selector,
+		"description", s.Description,
+	}
+}
+
 // Labels represents key value pairs.
 type Labels map[string]string
 
@@ -293,15 +307,18 @@ func (l Labels) Get(key string) string {
 	return l[key]
 }
 
-// KeyVals represents the service as slice of interface.
-func (s Service) KeyVals() []interface{} {
-	return []interface{}{
-		"id", s.ID,
-		"name", s.Name,
-		"namespace", s.Namespace,
-		"endpoint", s.Endpoint,
-		"modified", s.Modified,
-		"selector", s.Selector,
-		"description", s.Description,
+// Validate validates the label names.
+func (l Labels) Validate() error {
+	for labelName, labelValue := range l {
+		match := labelRegexp.FindString(labelName)
+		if match != labelName {
+			return fmt.Errorf("label name '%s' is not valid: label names must contain only ASCII letters, numbers and underscores", labelName)
+		}
+
+		if labelValue == "" {
+			return fmt.Errorf("label value for '%s' cannot be empty string", labelName)
+		}
 	}
+
+	return nil
 }
