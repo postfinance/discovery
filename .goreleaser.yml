@@ -7,6 +7,7 @@ builds:
     - id: discovery
       goos:
         - linux
+        - darwin
       goarch:
         - amd64
       main: ./cmd/discovery/
