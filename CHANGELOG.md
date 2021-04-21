@@ -1,3 +1,12 @@
+## 0.5.3 (2021-04-21)
+
+
+### Bug Fixes
+
+* **common**: validate service label names and label values ([#18](https://github.com/postfinance/discovery/issues/18), [f8198afc](https://github.com/postfinance/discovery/commit/f8198afc))
+
+
+
 ## 0.5.2 (2021-04-14)
 
 
