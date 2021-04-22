@@ -6,8 +6,11 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery/internal/cmd/server"
 	"github.com/postfinance/flash"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/zbindenren/king"
 )
+
+const appName = "discovery"
 
 //nolint:gochecknoglobals //this vars are set on build by goreleaser
 var (
@@ -17,8 +20,9 @@ var (
 )
 
 func main() {
+	registry := prometheus.NewRegistry()
 	cli := server.CLI{}
-	l := flash.New(flash.WithColor(), flash.WithStacktrace())
+	l := flash.New(flash.WithColor(), flash.WithStacktrace(), flash.WithPrometheus(appName, registry))
 
 	b, err := king.NewBuildInfo(version,
 		king.WithDateString(date),
@@ -30,7 +34,7 @@ func main() {
 
 	app := kong.Parse(&cli, king.DefaultOptions(
 		king.Config{
-			Name:        "discovery",
+			Name:        appName,
 			Description: "GRPC discovery service.",
 			BuildInfo:   b,
 		},
@@ -42,7 +46,7 @@ func main() {
 		cli.Profiler.New(syscall.SIGUSR2).Start()
 	}
 
-	if err := app.Run(&cli.Globals, l.Get()); err != nil {
+	if err := app.Run(&cli.Globals, l.Get(), registry); err != nil {
 		l.Fatal(err)
 	}
 }

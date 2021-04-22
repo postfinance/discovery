@@ -36,16 +36,17 @@ type serverCmd struct {
 	CACert       string   `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile"`
 }
 
-func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) error {
-	config, err := s.config()
+//nolint: interfacer // kong does not work with interfaces
+func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
+	config, err := s.config(registry)
 	if err != nil {
 		return err
 	}
 
 	l.Infow("starting grpc server",
 		king.FlagMap(app, regexp.MustCompile("key"), regexp.MustCompile("password"), regexp.MustCompile("secret")).
-			Rm("help", "env-help", "version").
-			Register(app.Model.Name, config.PrometheusRegistry).
+			Rm("help", "env-help", "version", "show-config").
+			Register(app.Model.Name, registry).
 			List()...)
 
 	b, err := g.backend()
@@ -68,7 +69,7 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) erro
 	return srv.Run(ctx)
 }
 
-func (s serverCmd) config() (server.Config, error) {
+func (s serverCmd) config(registry prometheus.Registerer) (server.Config, error) {
 	var transport http.RoundTripper
 
 	if s.CACert != "" {
@@ -81,7 +82,7 @@ func (s serverCmd) config() (server.Config, error) {
 	}
 
 	return server.Config{
-		PrometheusRegistry: prometheus.NewRegistry(),
+		PrometheusRegistry: registry,
 		NumReplicas:        s.Replicas,
 		GRPCListenAddr:     s.GRPCListen,
 		HTTPListenAddr:     s.HTTPListen,
