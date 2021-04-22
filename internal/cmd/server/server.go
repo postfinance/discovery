@@ -45,7 +45,7 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 
 	l.Infow("starting grpc server",
 		king.FlagMap(app, regexp.MustCompile("key"), regexp.MustCompile("password"), regexp.MustCompile("secret")).
-			Rm("help", "env-help", "version", "show-config").
+			Rm("help", "env-help", "version", "show-config", "etcd-ca", "etcd-cert").
 			Register(app.Model.Name, registry).
 			List()...)
 
