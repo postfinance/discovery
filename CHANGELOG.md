@@ -1,3 +1,19 @@
+## 0.6.0 (2021-04-22)
+
+
+### Bug Fixes
+
+* **discoveryd**: remove `etcd-ca` and `etcd-cert` from metrics ([d4cfe276](https://github.com/postfinance/discovery/commit/d4cfe276))
+  > This values can be pretty large. If you need to see the value you can
+  > refer to the logs.
+
+
+### New Features
+
+* **discoveryd**: add logger prometheus metrics ([e0656157](https://github.com/postfinance/discovery/commit/e0656157))
+
+
+
 ## 0.5.3 (2021-04-21)
 
 
