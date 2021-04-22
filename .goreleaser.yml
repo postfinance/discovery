@@ -22,6 +22,15 @@ builds:
       binary: discoveryd
       env:
         - CGO_ENABLED=0
+    - id: discovery-darwin
+      goos:
+        - darwin
+      goarch:
+        - amd64
+      main: ./cmd/discovery/
+      binary: discovery
+      env:
+        - CGO_ENABLED=0
 nfpms:
     - file_name_template: '{{ .ProjectName }}-{{ .Version }}.{{ .Arch }}'
       package_name: discovery
@@ -62,6 +71,39 @@ nfpms:
       description: Service discovery for prometheus with etcd backend.
       license: Die Schweizerische Post - PostFinance
       bindir: /usr/bin
+archives:
+  - id: linux
+    builds:
+      - discovery
+      - discoveryd
+    replacements:
+      "386": 32bit
+      amd64: x86_64
+      arm: ARM
+      arm64: ARM64
+      darwin: macOS
+      dragonfly: DragonFlyBSD
+      freebsd: FreeBSD
+      linux: Linux
+      netbsd: NetBSD
+      openbsd: OpenBSD
+      windows: Windows
+  - id: darwin
+    builds:
+      - discovery-darwin
+    allow_different_binary_count: true
+    replacements:
+      "386": 32bit
+      amd64: x86_64
+      arm: ARM
+      arm64: ARM64
+      darwin: macOS
+      dragonfly: DragonFlyBSD
+      freebsd: FreeBSD
+      linux: Linux
+      netbsd: NetBSD
+      openbsd: OpenBSD
+      windows: Windows
 checksum:
     name_template: checksums.txt
 dockers:
