@@ -26,6 +26,9 @@ type exporterCmd struct {
 
 //nolint: interfacer // kong does not work with interfaces
 func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
+	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	registry.MustRegister(prometheus.NewGoCollector())
+
 	l.Infow("starting exporter",
 		king.FlagMap(app, regexp.MustCompile("key"), regexp.MustCompile("password"), regexp.MustCompile("secret")).
 			Rm("help", "env-help", "version", "show-config", "etcd-ca", "etcd-cert").

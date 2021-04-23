@@ -38,6 +38,9 @@ type serverCmd struct {
 
 //nolint: interfacer // kong does not work with interfaces
 func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
+	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
+	registry.MustRegister(prometheus.NewGoCollector())
+
 	config, err := s.config(registry)
 	if err != nil {
 		return err
@@ -56,9 +59,6 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-
-	config.PrometheusRegistry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
-	config.PrometheusRegistry.MustRegister(prometheus.NewGoCollector())
 
 	srv, err := server.New(b, l, config)
 	if err != nil {
