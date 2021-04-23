@@ -48,9 +48,9 @@ func New(backend store.Backend, reg prometheus.Registerer, log *zap.SugaredLogge
 	servicesCount := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "discovery_services_count",
-			Help: "Number of registered services per server.",
+			Help: "Number of registered services per server and namespace.",
 		},
-		[]string{"server"},
+		[]string{"server", "namespace"},
 	)
 
 	reg.MustRegister(servicesCount)
@@ -188,7 +188,7 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	old, _ := r.serviceRepo.Get(r.idGenerator(s.Endpoint.String()), s.Namespace) // we ignore errors, because this is only used to update metrics
 	if old != nil && s.ID == "" {
 		for i := range old.Servers {
-			r.servicesCount.WithLabelValues(old.Servers[i]).Dec() // if service already exists, we decrease its metrics value to handle redistributions
+			r.servicesCount.WithLabelValues(old.Servers[i], old.Namespace).Dec() // if service already exists, we decrease its metrics value to handle redistributions
 		}
 	}
 
@@ -212,7 +212,7 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	s.Servers = servers.Names()
 
 	for i := range s.Servers {
-		r.servicesCount.WithLabelValues(s.Servers[i]).Inc()
+		r.servicesCount.WithLabelValues(s.Servers[i], s.Namespace).Inc()
 	}
 
 	return r.serviceRepo.Save(s)
@@ -243,7 +243,7 @@ func (r *Registry) UnRegisterService(idOrEndpoint, namespace string) error {
 	}
 
 	for _, server := range s.Servers {
-		r.servicesCount.WithLabelValues(server).Dec()
+		r.servicesCount.WithLabelValues(server, s.Namespace).Dec()
 	}
 
 	return nil
@@ -329,7 +329,7 @@ func (r *Registry) initializeServiceMetrics() error {
 
 	for i := range services {
 		for _, server := range services[i].Servers {
-			r.servicesCount.WithLabelValues(server).Inc()
+			r.servicesCount.WithLabelValues(server, services[i].Namespace).Inc()
 		}
 	}
 
