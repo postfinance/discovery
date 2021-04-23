@@ -1,3 +1,19 @@
+## 0.7.0 (2021-04-23)
+
+
+### Bug Fixes
+
+* **exporter**: show flags in metrics endpoint ([61745826](https://github.com/postfinance/discovery/commit/61745826))
+
+
+### New Features
+
+* **discoveryd**: add namespace to services count metric ([bd9a8186](https://github.com/postfinance/discovery/commit/bd9a8186))
+* **exporter**: add go and process metrics ([18bdb0c6](https://github.com/postfinance/discovery/commit/18bdb0c6))
+* **exporter**: add prometheus metrics endpoint ([ab758867](https://github.com/postfinance/discovery/commit/ab758867))
+
+
+
 ## 0.6.0 (2021-04-22)
 
 
