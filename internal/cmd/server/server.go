@@ -54,9 +54,8 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 		return err
 	}
 
-	ctx := contextWithSignal(context.Background(), func(s os.Signal) {
-		l.Infow("stopping server", "signal", s.String())
-	}, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	config.PrometheusRegistry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
 	config.PrometheusRegistry.MustRegister(prometheus.NewGoCollector())
@@ -93,27 +92,4 @@ func (s serverCmd) config(registry prometheus.Registerer) (server.Config, error)
 		OIDCURL:            s.OIDCEndpoint,
 		Transport:          transport,
 	}, nil
-}
-
-func contextWithSignal(ctx context.Context, f func(s os.Signal), s ...os.Signal) context.Context {
-	ctx, cancel := context.WithCancel(ctx)
-
-	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, s...)
-
-		defer signal.Stop(c)
-
-		select {
-		case <-ctx.Done():
-		case sig := <-c:
-			if f != nil {
-				f(sig)
-			}
-
-			cancel()
-		}
-	}()
-
-	return ctx
 }

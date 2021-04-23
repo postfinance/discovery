@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"regexp"
 	"syscall"
 	"time"
@@ -57,9 +58,8 @@ func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, re
 		}
 	}()
 
-	ctx := contextWithSignal(context.Background(), func(s os.Signal) {
-		l.Infow("stopping server", "signal", s.String())
-	}, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
 
 	cfg := e.config(registry)
 
