@@ -43,7 +43,10 @@ func TestExporter(t *testing.T) {
 		serverRepo:    serverGetter,
 		serviceRepo:   serviceGetter,
 		namespaceRepo: namespaceListGetter,
-		destDir:       dir,
+		config: Config{
+			Directory:      dir,
+			ResyncInterval: 24 * time.Hour,
+		},
 		destinations: files{
 			m:               &sync.Mutex{},
 			files:           map[string]*file{},
@@ -55,10 +58,10 @@ func TestExporter(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err = e.Start(ctx, "not-exist", 24*time.Hour)
+	err = e.Start(ctx, "not-exist")
 	require.Error(t, err)
 	go func() {
-		err = e.Start(ctx, "server1", 24*time.Hour)
+		err = e.Start(ctx, "server1")
 		require.NoError(t, err)
 	}()
 

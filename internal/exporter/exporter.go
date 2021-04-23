@@ -3,6 +3,8 @@ package exporter
 
 import (
 	"context"
+	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -13,6 +15,7 @@ import (
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/store"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -23,26 +26,40 @@ const (
 // Exporter writes services from store to filesystem for prometheus
 // file based service discovery.
 type Exporter struct {
+	config               Config
+	server               string
 	serviceRepo          serviceChanLister
 	serverRepo           serverChanGetter
 	namespaceRepo        namespaceListGetter
 	log                  *zap.SugaredLogger
-	destDir              string
-	server               string
+	httpServer           *http.Server
+	serviceWatchEvents   *prometheus.CounterVec
 	destinations         files
 	serviceWatchDisabled int32
 }
 
+// Config configures the exporter.
+type Config struct {
+	Directory          string
+	ResyncInterval     time.Duration
+	PrometheusRegistry prometheus.Registerer
+	HTTPListenAddr     string
+}
+
 // New creates a new exporter.
-func New(b store.Backend, log *zap.SugaredLogger, destDir string) *Exporter {
+func New(b store.Backend, log *zap.SugaredLogger, cfg Config) *Exporter {
 	namespaceGetter := repo.NewNamespace(b)
 
 	return &Exporter{
+		config:        cfg,
 		serviceRepo:   repo.NewService(b),
 		serverRepo:    repo.NewServer(b),
 		namespaceRepo: namespaceGetter,
-		log:           log,
-		destDir:       destDir,
+		serviceWatchEvents: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "discovery_exporter_service_watch_events_total",
+			Help: "The total number of service watch events partitioned by operation",
+		}, []string{"op"}),
+		log: log,
 		destinations: files{
 			m:               &sync.Mutex{},
 			files:           map[string]*file{},
@@ -53,7 +70,19 @@ func New(b store.Backend, log *zap.SugaredLogger, destDir string) *Exporter {
 }
 
 // Start starts the exporter and it blocks until context is done.
-func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time.Duration) error {
+func (e *Exporter) Start(ctx context.Context, server string) error {
+	errChan := make(chan error)
+
+	if e.config.isStartHTTPServer() {
+		go func() {
+			if err := e.startHTTP(); err != nil {
+				errChan <- err
+			}
+
+			close(errChan)
+		}()
+	}
+
 	_, err := e.serverRepo.Get(server)
 	if err != nil {
 		if err == store.ErrKeyNotFound {
@@ -66,26 +95,13 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 	e.enableWatch()
 	e.server = server
 
-	namespaces, err := e.namespaceRepo.List()
-	if err != nil {
+	if err := e.createExportDirectories(dirPermissions); err != nil {
 		return err
 	}
 
-	for _, n := range namespaces {
-		dir := filepath.Join(e.destDir, server, n.Name)
-		e.log.Infow("creating export directory", "path", dir)
-
-		if err := os.MkdirAll(dir, dirPermissions); err != nil {
-			return err
-		}
-	}
-
-	errHandler := func(err error) {
-		e.log.Fatalw("failed to create watcher", "err", err)
-	}
-	serviceEvents := e.serviceRepo.Chan(ctx, errHandler)
-	serverEvents := e.serverRepo.Chan(ctx, errHandler)
-	ticker := time.NewTicker(reSyncInterval)
+	serviceEvents := e.serviceRepo.Chan(ctx, e.watchErrorHandler)
+	serverEvents := e.serverRepo.Chan(ctx, e.watchErrorHandler)
+	ticker := time.NewTicker(e.config.ResyncInterval)
 
 	e.log.Info("sync services")
 
@@ -97,9 +113,9 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 		select {
 		case se, ok := <-serverEvents:
 			if !ok {
-				e.log.Infow("stopping exporter")
+				defer e.log.Infow("exporter stopped")
 
-				return nil
+				return e.stopHTTP()
 			}
 
 			msg := append([]interface{}{"type", se.Event.String()}, se.Server.KeyVals()...)
@@ -115,9 +131,9 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 
 			e.handleService(se)
 		case <-ctx.Done():
-			e.log.Infow("stopping exporter")
+			defer e.log.Infow("exporter stopped")
 
-			return nil
+			return e.stopHTTP()
 		case <-ticker.C:
 			e.log.Debug("initiating resync")
 			e.destinations.reset()
@@ -125,6 +141,8 @@ func (e *Exporter) Start(ctx context.Context, server string, reSyncInterval time
 			if err := e.sync(); err != nil {
 				e.log.Errorw("sync failed", "err", err)
 			}
+		case err := <-errChan:
+			return err
 		}
 	}
 }
@@ -145,6 +163,10 @@ func (e *Exporter) handleService(event *repo.ServiceEvent) {
 
 	if ignore {
 		return
+	}
+
+	if e.serviceWatchEvents != nil {
+		e.serviceWatchEvents.WithLabelValues(event.Event.String()).Inc()
 	}
 
 	switch event.Event {
@@ -215,7 +237,7 @@ func (e *Exporter) handleServer(event *repo.ServerEvent) {
 }
 
 func (e *Exporter) directory() string {
-	return filepath.Join(e.destDir, e.server)
+	return filepath.Join(e.config.Directory, e.server)
 }
 
 func (e *Exporter) isWatchDisabled() bool {
@@ -228,6 +250,28 @@ func (e *Exporter) disableWatch() {
 
 func (e *Exporter) enableWatch() {
 	atomic.StoreInt32(&e.serviceWatchDisabled, 0)
+}
+
+func (e *Exporter) createExportDirectories(permission fs.FileMode) error {
+	namespaces, err := e.namespaceRepo.List()
+	if err != nil {
+		return err
+	}
+
+	for _, n := range namespaces {
+		dir := filepath.Join(e.config.Directory, e.server, n.Name)
+		e.log.Infow("creating export directory", "path", dir)
+
+		if err := os.MkdirAll(dir, permission); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (e *Exporter) watchErrorHandler(err error) {
+	e.log.Fatalw("failed to create watcher", "err", err)
 }
 
 func (e *Exporter) sync() error {
@@ -270,4 +314,8 @@ type namespaceListGetter interface {
 
 type namespaceGetter interface {
 	Get(namespaceName string) (*discovery.Namespace, error)
+}
+
+func (cfg Config) isStartHTTPServer() bool {
+	return cfg.PrometheusRegistry != nil && cfg.HTTPListenAddr != ""
 }

@@ -20,9 +20,11 @@ type exporterCmd struct {
 	Directory      string        `help:"The destination directory." default:"/tmp/discovery"`
 	Server         string        `help:"The server for which services should be exported." required:"true"`
 	ResyncInterval time.Duration `help:"The interval in that the exporter resyncs all services to filesystem." default:"1h"`
+	HTTPListen     string        `help:"HTTP listen adddress" default:"localhost:3003"`
 }
 
-func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) error {
+//nolint: interfacer // kong does not work with interfaces
+func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
 	reg := prometheus.NewRegistry()
 
 	l.Infow("starting exporter",
@@ -59,7 +61,18 @@ func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context) er
 		l.Infow("stopping server", "signal", s.String())
 	}, syscall.SIGINT, syscall.SIGTERM)
 
-	exp := exporter.New(b, l, e.Directory)
+	cfg := e.config(registry)
 
-	return exp.Start(ctx, e.Server, e.ResyncInterval)
+	exp := exporter.New(b, l, cfg)
+
+	return exp.Start(ctx, e.Server)
+}
+
+func (e exporterCmd) config(registry prometheus.Registerer) exporter.Config {
+	return exporter.Config{
+		Directory:          e.Directory,
+		ResyncInterval:     e.ResyncInterval,
+		PrometheusRegistry: registry,
+		HTTPListenAddr:     e.HTTPListen,
+	}
 }
