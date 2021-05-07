@@ -1,7 +1,9 @@
 package client
 
 import (
+	"context"
 	"os"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery/internal/server/convert"
@@ -9,6 +11,8 @@ import (
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
 )
+
+const registerTimout = 300 * time.Second
 
 type serverCmd struct {
 	List       serverList       `cmd:"" help:"List registered servers."`
@@ -60,7 +64,9 @@ func (s serverRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) e
 		return err
 	}
 
-	ctx, cancel := g.ctx()
+	l.Infow("increasing command timeout", "timeout", registerTimout)
+
+	ctx, cancel := context.WithTimeout(context.Background(), registerTimout)
 	defer cancel()
 
 	_, err = cli.RegisterServer(ctx, &discoveryv1.RegisterServerRequest{
@@ -81,7 +87,9 @@ func (s serverUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context)
 		return err
 	}
 
-	ctx, cancel := g.ctx()
+	l.Infow("increasing command timeout", "timeout", registerTimout)
+
+	ctx, cancel := context.WithTimeout(context.Background(), registerTimout)
 	defer cancel()
 
 	_, err = cli.UnregisterServer(ctx, &discoveryv1.UnregisterServerRequest{
