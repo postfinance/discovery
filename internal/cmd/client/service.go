@@ -1,10 +1,13 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery"
@@ -12,6 +15,7 @@ import (
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/labels"
 )
 
@@ -19,6 +23,7 @@ type serviceCmd struct {
 	List       serviceList       `cmd:"" help:"List registered services."`
 	Register   serviceRegister   `cmd:"" help:"Register a service."`
 	UnRegister serviceUnRegister `cmd:"" help:"Unregister a service by ID or endpoint URL." name:"unregister"`
+	Import     serviceImport     `cmd:"" help:"Import services from yaml file."`
 }
 
 type serviceList struct {
@@ -208,4 +213,75 @@ func (s serviceFilter) filters() ([]discovery.FilterFunc, error) {
 	}
 
 	return filters, nil
+}
+
+type serviceImport struct {
+	Path string `arg:"true" help:"Path to yaml file." required:"true"`
+}
+
+func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
+	cli, err := g.serviceClient()
+	if err != nil {
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	d, err := ioutil.ReadFile(s.Path)
+	if err != nil {
+		return err
+	}
+
+	services := discovery.Services{}
+
+	err = yaml.Unmarshal(d, &services)
+	if err != nil {
+		return err
+	}
+
+	failed := discovery.Services{}
+
+	for j := range services {
+		s := services[j]
+		l.Debugw("import serivce", s.KeyVals()...)
+
+		_, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
+			Name:        s.Name,
+			Endpoint:    s.Endpoint.String(),
+			Description: s.Description,
+			Labels:      s.Labels,
+			Namespace:   s.Namespace,
+			Selector:    s.Selector,
+		})
+
+		if err != nil {
+			failed = append(failed, s)
+			msg := s.KeyVals()
+			msg = append(msg, "err", err)
+			l.Errorw("failed to import", msg...)
+
+			continue
+		}
+	}
+
+	if len(failed) > 0 {
+		file, err := ioutil.TempFile("", "discovery-import-failed*.yaml")
+		if err != nil {
+			return fmt.Errorf("failed to create tmp file: %w", err)
+		}
+
+		l.Infow("saving failed to import services", "path", file.Name())
+
+		d, err := yaml.Marshal(failed)
+		if err != nil {
+			return fmt.Errorf("failed to marshal failed services: %w", err)
+		}
+
+		if err := ioutil.WriteFile(file.Name(), d, 0600); err != nil {
+			return fmt.Errorf("failed to write file %s: %w", file.Name(), err)
+		}
+	}
+
+	return nil
 }

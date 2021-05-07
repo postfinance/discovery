@@ -27,7 +27,6 @@ type CLI struct {
 	Login     loginCmd     `cmd:"" help:"Perform OIDC login."`
 	Service   serviceCmd   `cmd:"" help:"Register and unregister services." aliases:"svc"`
 	Namespace namespaceCmd `cmd:"" help:"Register and unregister namespaces." aliases:"ns"`
-	Import    importCmd    `cmd:"" help:"Import new services"`
 	Token     tokenCmd     `cmd:"" help:"Manage access tokens"`
 }
 
