@@ -31,9 +31,10 @@ import (
 )
 
 const (
-	httpStopTimeout   = 10 * time.Second
-	httpClientTimeout = 10 * time.Second
-	cacheSyncInterval = 1 * time.Minute
+	httpStopTimeout              = 10 * time.Second
+	httpClientTimeout            = 10 * time.Second
+	cacheSyncInterval            = 1 * time.Minute
+	serviceCounterUpdateInterval = 15 * time.Second
 )
 
 var (
@@ -166,6 +167,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 	}
 
 	go r.StartCacheUpdater(ctx, cacheSyncInterval)
+	go r.StartServiceCounterUpdater(ctx, serviceCounterUpdateInterval)
 
 	ns, err := r.ListNamespaces()
 	if err != nil {

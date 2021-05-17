@@ -70,10 +70,6 @@ func New(backend store.Backend, reg prometheus.Registerer, log *zap.SugaredLogge
 		},
 	}
 
-	if err := registry.initializeServiceMetrics(); err != nil {
-		log.Errorw("failed to initialize service metrics", "err", err)
-	}
-
 	if err := registry.initNamespaceCache(); err != nil {
 		return nil, err
 	}
@@ -111,6 +107,33 @@ func (r Registry) StartCacheUpdater(ctx context.Context, reSyncInterval time.Dur
 
 			if err := r.initNamespaceCache(); err != nil {
 				r.log.Errorw("failed to sync namespace cache", "err", err)
+			}
+		}
+	}
+}
+
+// StartServiceCounterUpdater updates service counter metrics every interval. It runs until context ctx
+// is canceled.
+func (r Registry) StartServiceCounterUpdater(ctx context.Context, interval time.Duration) {
+	r.log.Infow("initializing service counter", "interval", interval)
+
+	if err := r.updateServiceCounter(); err != nil {
+		r.log.Errorw("failed to initialize service counter", "err", err)
+	}
+
+	ticker := time.NewTicker(interval)
+
+	for {
+		select {
+		case <-ctx.Done():
+			r.log.Info("stopping service counter")
+
+			return
+		case <-ticker.C:
+			r.log.Debug("updating service counter")
+
+			if err := r.updateServiceCounter(); err != nil {
+				r.log.Errorw("service counter update failed", "err", err)
 			}
 		}
 	}
@@ -185,20 +208,7 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 		return nil, fmt.Errorf("namespace %s: %w", s.Namespace, ErrNotFound)
 	}
 
-	old, _ := r.serviceRepo.Get(r.idGenerator(s.Endpoint.String()), s.Namespace) // we ignore errors, because this is only used to update metrics
-	if old != nil && s.ID == "" {
-		for i := range old.Servers {
-			r.servicesCount.WithLabelValues(old.Servers[i], old.Namespace).Dec() // if service already exists, we decrease its metrics value to handle redistributions
-		}
-	}
-
-	msg := "register service"
-
-	if s.ID != "" {
-		msg = "updating service"
-	}
-
-	r.log.Infow(msg, s.KeyVals()...)
+	r.log.Infow("register service", s.KeyVals()...)
 
 	servers, err := r.get(s.Endpoint.String(), r.numReplicas, s.Selector)
 	if err != nil {
@@ -210,10 +220,6 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	}
 
 	s.Servers = servers.Names()
-
-	for i := range s.Servers {
-		r.servicesCount.WithLabelValues(s.Servers[i], s.Namespace).Inc()
-	}
 
 	return r.serviceRepo.Save(s)
 }
@@ -231,19 +237,10 @@ func (r *Registry) UnRegisterService(idOrEndpoint, namespace string) error {
 		id = r.idGenerator(idOrEndpoint)
 	}
 
-	s, err := r.serviceRepo.Get(id, namespace)
-	if err != nil {
-		return err
-	}
-
 	r.log.Infow("unregister service", "id", id, "namespace", namespace)
 
 	if err := r.serviceRepo.Delete(id, namespace); err != nil {
 		return err
-	}
-
-	for _, server := range s.Servers {
-		r.servicesCount.WithLabelValues(server, s.Namespace).Dec()
 	}
 
 	return nil
@@ -255,8 +252,6 @@ func (r *Registry) ReRegisterAllServices() (numChanges int, err error) {
 	if err != nil {
 		return 0, err
 	}
-
-	r.servicesCount.Reset()
 
 	for i := range allServices {
 		s := allServices[i]
@@ -321,11 +316,13 @@ func (r *Registry) UnRegisterNamespace(name string) error {
 	return nil
 }
 
-func (r *Registry) initializeServiceMetrics() error {
+func (r *Registry) updateServiceCounter() error {
 	services, err := r.serviceRepo.List("", "")
 	if err != nil {
 		return err
 	}
+
+	r.servicesCount.Reset()
 
 	for i := range services {
 		for _, server := range services[i].Servers {
