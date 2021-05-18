@@ -13,6 +13,7 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -130,6 +131,9 @@ func (s *Server) startGRPC(ctx context.Context) error {
 		return err
 	}
 
+	// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
+	// grpc_zap.ReplaceGrpcLoggerV2(s.l.Desugar())
+
 	s.grpcServer = grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
 			grpc_recovery.StreamServerInterceptor(opts...),
@@ -137,6 +141,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 			auth.StreamMethodNameInterceptor(),
 			grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
 			auth.StreamAuthorizeInterceptor(s.config.OIDCRoles...),
+			grpc_zap.StreamServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
 		)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(opts...),
@@ -144,6 +149,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 			auth.UnaryMethodNameInterceptor(),
 			grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
 			auth.UnaryAuthorizeInterceptor(s.config.OIDCRoles...),
+			grpc_zap.UnaryServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
 		)),
 	)
 
