@@ -1,3 +1,12 @@
+## 0.7.2 (2021-05-18)
+
+
+### Bug Fixes
+
+* **discoveryd**: return `NotFound` grpc error instead of `Internal` or `InvalidArgument` when namespace or servers not found ([c342497a](https://github.com/postfinance/discovery/commit/c342497a))
+
+
+
 ## 0.7.1 (2021-05-18)
 
 
