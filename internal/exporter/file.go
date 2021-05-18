@@ -1,12 +1,14 @@
 package exporter
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -48,6 +50,13 @@ func (f *file) delService(id string) {
 	f.m.Unlock()
 }
 
+func (f *file) listServices() []service {
+	f.m.Lock()
+	defer f.m.Unlock()
+
+	return f.services.list()
+}
+
 func (f *file) getService(id string) (service, bool) {
 	f.m.Lock()
 	s, ok := f.services[id]
@@ -73,16 +82,14 @@ func (f *file) checkService(s service) error {
 }
 
 func (f *file) data() (data []byte, hash string, err error) {
-	f.m.Lock()
-	defer f.m.Unlock()
+	svcs := f.listServices()
 
-	if len(f.services) == 0 || f.exportCfg == discovery.Disabled {
+	if len(svcs) == 0 || f.exportCfg == discovery.Disabled {
 		return []byte{}, "", nil
 	}
 
 	t := make([]targetGroup, 0, len(f.services))
 
-	svcs := f.services.list()
 	for i := range svcs {
 		t = append(t, newTargetGroup(svcs[i], f.exportCfg))
 	}
@@ -100,6 +107,35 @@ type files struct {
 	log             *zap.SugaredLogger
 	namespaceGetter namespaceGetter
 	files           map[string]*file // files per namespace:jobname
+}
+
+func (f files) String() string {
+	f.m.Lock()
+	defer f.m.Unlock()
+
+	keys := make([]string, 0, len(f.files))
+	for k := range f.files {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	buf := bytes.NewBufferString("")
+
+	for _, k := range keys {
+		svcs := f.files[k].listServices()
+		eps := make([]string, 0, len(svcs))
+
+		for i := range svcs {
+			eps = append(eps, svcs[i].Endpoint.String())
+		}
+
+		for _, e := range eps {
+			fmt.Fprintf(buf, "%s: %s\n", k, e)
+		}
+	}
+
+	return buf.String()
 }
 
 func (f *files) getFiles() map[string]*file {
