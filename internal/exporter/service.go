@@ -14,11 +14,6 @@ func (s service) key() string {
 	return s.Namespace + ":" + s.Name
 }
 
-// isBlackbox returns true if service has "blackbox" as exportConfigMetaLabel label.
-// func (s service) isBlackbox() bool {
-// return s.Labels.Get(exportConfigMetaLabel) == blackboxName
-// }
-
 type services map[string]service
 
 func (s services) list() []service {
