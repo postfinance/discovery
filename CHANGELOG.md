@@ -1,3 +1,12 @@
+## 0.7.3 (2021-05-18)
+
+
+### Bug Fixes
+
+* **discoveryd**: use grpc log middleware to log grpc methods ([e4524024](https://github.com/postfinance/discovery/commit/e4524024))
+
+
+
 ## 0.7.2 (2021-05-18)
 
 
