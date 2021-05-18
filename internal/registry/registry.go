@@ -22,8 +22,9 @@ import (
 
 // Common errors
 var (
-	ErrNotFound         = errors.New("not found")
-	ErrContainsServices = errors.New("server has registered services")
+	ErrNoServersFound    = errors.New("no servers found")
+	ErrNamespaceNotFound = errors.New("namespace not found")
+	ErrContainsServices  = errors.New("server has registered services")
 )
 
 // Registry registers server or service.
@@ -205,7 +206,7 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	}
 
 	if !r.namespaceCache.hasNamespace(s.Namespace) {
-		return nil, fmt.Errorf("namespace %s: %w", s.Namespace, ErrNotFound)
+		return nil, ErrNamespaceNotFound
 	}
 
 	r.log.Infow("register service", s.KeyVals()...)
@@ -216,7 +217,7 @@ func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, err
 	}
 
 	if len(servers) == 0 {
-		return nil, ErrNotFound
+		return nil, ErrNoServersFound
 	}
 
 	s.Servers = servers.Names()

@@ -78,8 +78,12 @@ func (a *API) RegisterService(ctx context.Context, req *discoveryv1.RegisterServ
 
 	svc, err := a.r.RegisterService(*s)
 	if err != nil {
-		if err == registry.ErrNotFound {
-			return nil, status.Errorf(codes.InvalidArgument, "no server found for selector '%s'", req.GetSelector())
+		if err == registry.ErrNoServersFound {
+			return nil, status.Errorf(codes.NotFound, "no server found for selector '%s'", req.GetSelector())
+		}
+
+		if err == registry.ErrNamespaceNotFound {
+			return nil, status.Errorf(codes.NotFound, "namespace '%s' not found", req.GetNamespace())
 		}
 
 		return nil, status.Errorf(codes.Internal, "could not register service %s in store: %s", req.GetEndpoint(), err)
