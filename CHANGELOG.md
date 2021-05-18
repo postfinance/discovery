@@ -1,3 +1,15 @@
+## 0.7.1 (2021-05-18)
+
+
+### Bug Fixes
+
+* **common**: increase server register timeout ([3457a2f3](https://github.com/postfinance/discovery/commit/3457a2f3))
+* **common**: move import command to service subcommand ([4177c181](https://github.com/postfinance/discovery/commit/4177c181))
+* **discoveryd**: `discovery_services_count` reports now the correct number ([136f77a9](https://github.com/postfinance/discovery/commit/136f77a9))
+* **exporter**: no more false positive `failed to delete service` error messages ([#20](https://github.com/postfinance/discovery/issues/20), [ca215651](https://github.com/postfinance/discovery/commit/ca215651))
+
+
+
 ## 0.7.0 (2021-04-23)
 
 
