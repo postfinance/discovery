@@ -184,9 +184,10 @@ func (e *Exporter) handleService(event *repo.ServiceEvent) {
 			e.log.Errorw("failed to add service", msg...)
 		}
 	case repo.Delete:
-		if err := e.destinations.delService(event.Service.Namespace, event.Service.ID); err != nil {
-			e.log.Errorw("failed to delete service", "namespace", event.Service.Namespace, "id", event.Service.ID, "err", err)
-		}
+		// the only possible error is a 'not found' error. we must ingore this error,
+		// otherwise we log errors for services that were never registered on this exporter's
+		// chache (different server).
+		_ = e.destinations.delService(event.Service.Namespace, event.Service.ID)
 	default:
 		e.log.Errorw("unsupported event", "event", event.Event)
 	}
