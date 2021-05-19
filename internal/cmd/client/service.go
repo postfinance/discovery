@@ -105,11 +105,13 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		ctx, cancel := g.ctx()
 		defer cancel()
 
+		lbls := discovery.Labels{"bla": ""}
+
 		r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
 			Name:      s.Name,
 			Namespace: s.Namespace,
 			Endpoint:  ep,
-			Labels:    s.Labels,
+			Labels:    lbls,
 			Selector:  s.Selector,
 		})
 		if err != nil {

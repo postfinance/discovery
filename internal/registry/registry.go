@@ -20,13 +20,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// Common errors
-var (
-	ErrNoServersFound    = errors.New("no servers found")
-	ErrNamespaceNotFound = errors.New("namespace not found")
-	ErrContainsServices  = errors.New("server has registered services")
-)
-
 // Registry registers server or service.
 type Registry struct {
 	log            *zap.SugaredLogger
@@ -145,7 +138,7 @@ func (r *Registry) RegisterServer(name string, labels discovery.Labels) (*discov
 	s := discovery.NewServer(name, labels)
 
 	if err := s.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s : %w", err, ErrValidation)
 	}
 
 	_, err := r.serverRepo.Save(*s)
@@ -202,7 +195,7 @@ func (r *Registry) ListServer(selector string) (discovery.Servers, error) {
 // RegisterService registers a service.
 func (r *Registry) RegisterService(s discovery.Service) (*discovery.Service, error) {
 	if err := s.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s : %w", err, ErrValidation)
 	}
 
 	if !r.namespaceCache.hasNamespace(s.Namespace) {
@@ -278,7 +271,7 @@ func (r *Registry) ListService(namespace, selector string) (discovery.Services, 
 // RegisterNamespace registers a namespace.
 func (r *Registry) RegisterNamespace(n discovery.Namespace) (*discovery.Namespace, error) {
 	if err := n.Validate(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%s : %w", err, ErrValidation)
 	}
 
 	r.log.Infow("register namespace", "name", n.Name, "exportconfig", n.Export.String())

@@ -28,6 +28,10 @@ type API struct {
 func (a *API) RegisterServer(_ context.Context, req *discoveryv1.RegisterServerRequest) (*discoveryv1.RegisterServerResponse, error) {
 	s, err := a.r.RegisterServer(req.GetName(), req.GetLabels())
 	if err != nil {
+		if registry.IsValidationError(err) {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+
 		return nil, status.Errorf(codes.Internal, "could not register server %s in store: %s", req.GetName(), err)
 	}
 
@@ -78,12 +82,16 @@ func (a *API) RegisterService(ctx context.Context, req *discoveryv1.RegisterServ
 
 	svc, err := a.r.RegisterService(*s)
 	if err != nil {
-		if err == registry.ErrNoServersFound {
+		if registry.IsServersNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "no server found for selector '%s'", req.GetSelector())
 		}
 
-		if err == registry.ErrNamespaceNotFound {
+		if registry.IsNamespaceNotFound(err) {
 			return nil, status.Errorf(codes.NotFound, "namespace '%s' not found", req.GetNamespace())
+		}
+
+		if registry.IsValidationError(err) {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
 		}
 
 		return nil, status.Errorf(codes.Internal, "could not register service %s in store: %s", req.GetEndpoint(), err)
@@ -128,6 +136,10 @@ func (a *API) RegisterNamespace(_ context.Context, req *discoveryv1.RegisterName
 	})
 
 	if err != nil {
+		if registry.IsValidationError(err) {
+			return nil, status.Errorf(codes.InvalidArgument, "%s", err)
+		}
+
 		return nil, status.Errorf(codes.Internal, "could not register namespace %s in store: %s", req.GetName(), err)
 	}
 
