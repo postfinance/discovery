@@ -1,3 +1,12 @@
+## 0.7.4 (2021-05-19)
+
+
+### Bug Fixes
+
+* **discoveryd**: use correct grpc codes on validation and not found errors ([bcc67252](https://github.com/postfinance/discovery/commit/bcc67252))
+
+
+
 ## 0.7.3 (2021-05-18)
 
 
