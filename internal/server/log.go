@@ -27,7 +27,7 @@ func customCodeToLevel(code codes.Code) zapcore.Level {
 	case codes.PermissionDenied:
 		return zap.ErrorLevel
 	case codes.Unauthenticated:
-		return zap.DebugLevel // unauthenticated requests can happen
+		return zap.DebugLevel
 	case codes.ResourceExhausted:
 		return zap.ErrorLevel
 	case codes.FailedPrecondition:
