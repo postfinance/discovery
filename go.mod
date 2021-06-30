@@ -22,7 +22,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/zbindenren/king v0.1.0
 	github.com/zbindenren/sfmt v0.1.0
-	go.uber.org/zap v1.17.0
+	go.uber.org/zap v1.18.1
 	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 	google.golang.org/genproto v0.0.0-20210602131652-f16073e35f0c
