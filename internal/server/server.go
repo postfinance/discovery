@@ -209,11 +209,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 		return err
 	}
 
-	if err := s.grpcServer.Serve(listener); err != nil {
-		return err
-	}
-
-	return nil
+	return s.grpcServer.Serve(listener)
 }
 
 func (s *Server) startHTTP(ctx context.Context) error {

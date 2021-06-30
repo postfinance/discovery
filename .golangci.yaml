@@ -7,10 +7,8 @@ run:
     - web
     - .go
 linters-settings:
-  dupl:
-    threshold: 100
   funlen:
-    lines: 100
+    lines: 105
     statements: 50
   goconst:
     min-len: 2
@@ -26,7 +24,7 @@ linters-settings:
       - whyNoLint
       - hugeParam
   gocyclo:
-    min-complexity: 15
+    min-complexity: 16
   revive:
     min-confidence: 0.8
   govet:
@@ -50,7 +48,6 @@ linters:
     - deadcode
     - depguard
     - dogsled
-    - dupl
     - errcheck
     - funlen
     - nolintlint

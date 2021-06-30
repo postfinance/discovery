@@ -13,6 +13,7 @@ import (
 	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/server"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/zbindenren/king"
 	"go.uber.org/zap"
 )
@@ -38,8 +39,8 @@ type serverCmd struct {
 
 //nolint: interfacer // kong does not work with interfaces
 func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
-	registry.MustRegister(prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}))
-	registry.MustRegister(prometheus.NewGoCollector())
+	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	registry.MustRegister(collectors.NewGoCollector())
 
 	config, err := s.config(registry)
 	if err != nil {

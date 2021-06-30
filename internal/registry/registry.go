@@ -233,11 +233,7 @@ func (r *Registry) UnRegisterService(idOrEndpoint, namespace string) error {
 
 	r.log.Infow("unregister service", "id", id, "namespace", namespace)
 
-	if err := r.serviceRepo.Delete(id, namespace); err != nil {
-		return err
-	}
-
-	return nil
+	return r.serviceRepo.Delete(id, namespace)
 }
 
 // ReRegisterAllServices reregisters all services.
