@@ -20,4 +20,7 @@ sections:
     - type: chore
       title: Tasks
       hidden: true
+    - type: deps
+      title: Dependencies
+      hidden: false
 github_project_path: postfinance/discovery
