@@ -1,3 +1,21 @@
+## 0.7.5 (2021-06-30)
+
+
+### Dependencies
+
+* **apimachinery**: 0.21.0 -> v0.21.2 ([29da097f](https://github.com/postfinance/discovery/commit/29da097f))
+* **genproto**: v0.0.0-20210617175327-b9e0b3197ced -> v0.0.0-20210629200056-84d6f6074151 ([4d78ae7c](https://github.com/postfinance/discovery/commit/4d78ae7c))
+* **grpc**: 1.38.0 -> 1.39.0 ([9bb9e423](https://github.com/postfinance/discovery/commit/9bb9e423))
+* **grpc-gateway**: v2.4.0 -> v2.5.0 ([4f7c0e53](https://github.com/postfinance/discovery/commit/4f7c0e53))
+* **kong**: master -> 0.2.17 ([4a5575ba](https://github.com/postfinance/discovery/commit/4a5575ba))
+* **oauth2**: 0.0.0-20210514164344-f6687ab2804c -> 0.0.0-20210628180205-a41e5a781914 ([b2ee8c69](https://github.com/postfinance/discovery/commit/b2ee8c69))
+* **protobuf**: v1.26.0 -> v1.27.1 ([268646c2](https://github.com/postfinance/discovery/commit/268646c2))
+* **store**: update from 0.2.0-pre to 0.2.0 ([0dc85d94](https://github.com/postfinance/discovery/commit/0dc85d94))
+* **term**: 0.0.0-20210503060354-a79de5458b56 -> 0.0.0-20210615171337-6886f2dfbf5b ([812f0749](https://github.com/postfinance/discovery/commit/812f0749))
+* **zap**: v1.17.0 -> v1.18.1 ([dcb32b0d](https://github.com/postfinance/discovery/commit/dcb32b0d))
+
+
+
 ## 0.7.4 (2021-05-19)
 
 
