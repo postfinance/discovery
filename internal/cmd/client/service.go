@@ -105,7 +105,7 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		ctx, cancel := g.ctx()
 		defer cancel()
 
-		lbls := discovery.Labels{"bla": ""}
+		lbls := s.Labels
 
 		r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
 			Name:      s.Name,
