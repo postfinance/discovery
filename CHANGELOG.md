@@ -1,3 +1,12 @@
+## 0.7.6 (2021-08-03)
+
+
+### Bug Fixes
+
+* **cli**: register service failed when no labels were used ([1a38a07f](https://github.com/postfinance/discovery/commit/1a38a07f))
+
+
+
 ## 0.7.5 (2021-06-30)
 
 
