@@ -1,3 +1,19 @@
+## 0.7.7 (2021-08-05)
+
+
+### Bug Fixes
+
+* **common**: update jwt lib to fix a security issue ([8417051b](https://github.com/postfinance/discovery/commit/8417051b))
+
+
+### Dependencies
+
+* **apimachinery**: 0.21.2 -> 0.22.0 ([ac6534c8](https://github.com/postfinance/discovery/commit/ac6534c8))
+* **genproto**: 0.0.0-20210629200056-84d6f6074151 -> 0.0.0-20210804223703-f1db76f3300d ([4e2413c8](https://github.com/postfinance/discovery/commit/4e2413c8))
+* **king**: 0.1.0 -> 0.2.0 ([baff26c5](https://github.com/postfinance/discovery/commit/baff26c5))
+
+
+
 ## 0.7.6 (2021-08-03)
 
 
