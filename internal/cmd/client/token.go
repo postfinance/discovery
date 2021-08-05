@@ -17,7 +17,7 @@ type tokenCmd struct {
 
 type tokenCreate struct {
 	ID         string        `arg:"" short:"i" help:"An ID that can identify token (i.e: username)" required:"true"`
-	Expiry     time.Duration `short:"e" default:"0" help:"How long should the token be valid. 0 is forever."`
+	Expiry     time.Duration `short:"e" default:"0" help:"How long (duration) should the token be valid. 0 is forever."`
 	Namespaces []string      `short:"n" help:"The namespaces the token has access to." required:"true"`
 }
 

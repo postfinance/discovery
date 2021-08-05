@@ -1,10 +1,10 @@
 package auth
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go/v4"
-	"github.com/pkg/errors"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 // TokenHandler creates tokens.
@@ -33,16 +33,16 @@ func (t *TokenHandler) Create(id string, expires time.Duration, namespaces ...st
 
 	claims := TokenClaims{
 		StandardClaims: jwt.StandardClaims{
-			ID:        id,
+			Id:        id,
 			Issuer:    t.issuer,
-			IssuedAt:  jwt.At(now),
-			NotBefore: jwt.At(now),
+			IssuedAt:  now.Unix(),
+			NotBefore: now.Unix(),
 		},
 		Namespaces: namespaces,
 	}
 
 	if expires > 0 {
-		claims.ExpiresAt = jwt.At(now.Add(expires))
+		claims.ExpiresAt = now.Add(expires).Unix()
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -56,31 +56,23 @@ func (t *TokenHandler) Validate(token string) (*User, error) {
 	tknClaims := TokenClaims{}
 
 	tkn, err := jwt.ParseWithClaims(token, &tknClaims, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.Errorf("wrong signing method in token: %v", token.Method)
-		}
 		return []byte(t.secret), nil
 	})
-	if err != nil {
-		return nil, err
+
+	claims, ok := tkn.Claims.(*TokenClaims)
+	if !ok || !tkn.Valid {
+		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	if !tkn.Valid {
-		return nil, errors.New("invalid access token")
-	}
-
-	if tknClaims.Issuer != t.issuer {
-		return nil, errors.Errorf("wrong issuer is '%s', not %s", tknClaims.Issuer, t.issuer)
+	if claims.StandardClaims.Issuer != t.issuer {
+		return nil, fmt.Errorf("wrong issuer is '%s', not %s", tknClaims.Issuer, t.issuer)
 	}
 
 	u := User{
-		Username:   tknClaims.ID,
-		Namespaces: tknClaims.Namespaces,
+		Username:   claims.StandardClaims.Id,
+		Namespaces: claims.Namespaces,
 		Kind:       MachineToken,
-	}
-
-	if tknClaims.ExpiresAt != nil {
-		u.ExpiresAt = tknClaims.ExpiresAt.Time
+		ExpiresAt:  time.Unix(claims.StandardClaims.ExpiresAt, 0),
 	}
 
 	return &u, nil
@@ -88,12 +80,12 @@ func (t *TokenHandler) Validate(token string) (*User, error) {
 
 // IsMachine checks if token is a machine token issued by lslb service.
 func (t *TokenHandler) IsMachine(token string) (bool, error) {
-	tknClaims := jwt.StandardClaims{}
+	tknClaims := jwt.MapClaims{}
 	p := new(jwt.Parser)
 
 	if _, _, err := p.ParseUnverified(token, &tknClaims); err != nil {
 		return false, err
 	}
 
-	return tknClaims.Issuer == t.issuer, nil
+	return tknClaims["iss"] == t.issuer, nil
 }
