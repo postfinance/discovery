@@ -2,6 +2,8 @@ package auth
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v4"
@@ -21,28 +23,22 @@ func NewTokenHandler(secret, issuer string) *TokenHandler {
 	}
 }
 
-// TokenClaims is like jwt standard claims with additional list of namespaces.
-type TokenClaims struct {
-	jwt.StandardClaims
-	Namespaces []string `json:"namespaces,omitempty"`
-}
-
 // Create creates a new token. If expires is 0, it never expires.
 func (t *TokenHandler) Create(id string, expires time.Duration, namespaces ...string) (string, error) {
 	now := time.Now()
 
 	claims := TokenClaims{
-		StandardClaims: jwt.StandardClaims{
+		CompatibleStandardClaims: CompatibleStandardClaims{
 			Id:        id,
 			Issuer:    t.issuer,
-			IssuedAt:  now.Unix(),
-			NotBefore: now.Unix(),
+			IssuedAt:  TokenTime(now.Unix()),
+			NotBefore: TokenTime(now.Unix()),
 		},
 		Namespaces: namespaces,
 	}
 
 	if expires > 0 {
-		claims.ExpiresAt = now.Add(expires).Unix()
+		claims.ExpiresAt = TokenTime(now.Add(expires).Unix())
 	}
 
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -64,15 +60,15 @@ func (t *TokenHandler) Validate(token string) (*User, error) {
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	if claims.StandardClaims.Issuer != t.issuer {
+	if claims.CompatibleStandardClaims.Issuer != t.issuer {
 		return nil, fmt.Errorf("wrong issuer is '%s', not %s", tknClaims.Issuer, t.issuer)
 	}
 
 	u := User{
-		Username:   claims.StandardClaims.Id,
+		Username:   claims.CompatibleStandardClaims.Id,
 		Namespaces: claims.Namespaces,
 		Kind:       MachineToken,
-		ExpiresAt:  time.Unix(claims.StandardClaims.ExpiresAt, 0),
+		ExpiresAt:  claims.ExpiresAt.Time(),
 	}
 
 	return &u, nil
@@ -88,4 +84,64 @@ func (t *TokenHandler) IsMachine(token string) (bool, error) {
 	}
 
 	return tknClaims["iss"] == t.issuer, nil
+}
+
+// TokenClaims is like jwt standard claims with additional list of namespaces.
+type TokenClaims struct {
+	CompatibleStandardClaims
+	Namespaces []string `json:"namespaces,omitempty"`
+}
+
+// CompatibleStandardClaims is the same as jwt.StandardClaims but also
+// allows float64 for durations (in order to be backward compatible to old library).
+type CompatibleStandardClaims struct {
+	Audience  string    `json:"aud,omitempty"`
+	ExpiresAt TokenTime `json:"exp,omitempty"`
+	Id        string    `json:"jti,omitempty"` //nolint: revive,stylecheck // we to use the same name as the library
+	IssuedAt  TokenTime `json:"iat,omitempty"`
+	Issuer    string    `json:"iss,omitempty"`
+	NotBefore TokenTime `json:"nbf,omitempty"`
+	Subject   string    `json:"sub,omitempty"`
+}
+
+// Valid validates standard claims.
+func (c CompatibleStandardClaims) Valid() error {
+	claims := jwt.StandardClaims{
+		Audience:  c.Audience,
+		ExpiresAt: int64(c.ExpiresAt),
+		Id:        c.Id,
+		IssuedAt:  int64(c.IssuedAt),
+		Issuer:    c.Issuer,
+		NotBefore: int64(c.NotBefore),
+		Subject:   c.Subject,
+	}
+
+	return claims.Valid()
+}
+
+// TokenTime represent the token times. It is an int64 with custom marshal and unmarshl
+// to also alow float64 as token times for backward compatibility reasons. Old jwt package
+// created float64 token times.
+type TokenTime int64
+
+// Time converts TokenTime to time.Time.
+func (t *TokenTime) Time() time.Time {
+	return time.Unix(int64(*t), 0)
+}
+
+func (t *TokenTime) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", t)), nil
+}
+
+func (t *TokenTime) UnmarshalJSON(b []byte) error {
+	stripped := strings.ReplaceAll(string(b), `"`, "")
+
+	f, err := strconv.ParseFloat(stripped, 64)
+	if err != nil {
+		return err
+	}
+
+	*t = TokenTime(f)
+
+	return nil
 }
