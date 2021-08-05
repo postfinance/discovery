@@ -1,3 +1,15 @@
+## 0.7.8 (2021-08-05)
+
+
+### Bug Fixes
+
+* **common**: failed to parse machine token errors ([2cf360ba](https://github.com/postfinance/discovery/commit/2cf360ba))
+  > After migrating to an updated jwt package, tokens created with the old
+  > library could not be parsed anymore. Now parsing works for old and new
+  > generation jwt tokens.
+
+
+
 ## 0.7.7 (2021-08-05)
 
 
