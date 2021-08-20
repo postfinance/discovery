@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +15,8 @@ func TestJWT(t *testing.T) {
 	token, err := th.Create("username", 1*time.Hour, "namespace1", "namespace2")
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
+
+	fmt.Println(token)
 
 	t.Run("valid token", func(t *testing.T) {
 		u, err := th.Validate(token)
@@ -43,33 +46,31 @@ func TestJWTCompatibility(t *testing.T) {
 
 	/*
 		{
-			"exp": 1628181960.502017,
-			"jti":"username",
-			"iat": 1628178360.502017,
-			"iss": "issuer",
-			"nbf": 1628178360.502017,
-			"namespaces": [
-				"name space1",
-				"namespace2"
-			]
-		}
-	*/
-	const oldToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MjgxODE5NjAuNTAyMDE3LCJqdGkiOiJ1c2VybmFtZSIsImlhdCI6MTYyODE3ODM2MC41MDIwMTcsImlzcyI6Imlzc3VlciIsIm5iZiI6MTYyODE3ODM2MC41MDIwMTcsIm5hbWVzcGFjZXMiOlsibmFtZXNwYWNlMSIsIm5hbWVzcGFjZTIiXX0.ILa9euUbxTsVMBcJwCrhyTdbfV6-PO0c9jB9SFO3KD0`
-
-	/*
-		{
-			"exp": 1628182190,
 			"jti": "username",
-			"iat": 1628178590,
+			"iat": 1629461215.308863,
 			"iss": "issuer",
-			"nbf": 1628178590,
+			"nbf": 1629461215.308863,
 			"namespaces": [
 				"namespace1",
 				"namespace2"
 			]
 		}
 	*/
-	const token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MjgxODIxOTAsImp0aSI6InVzZXJuYW1lIiwiaWF0IjoxNjI4MTc4NTkwLCJpc3MiOiJpc3N1ZXIiLCJuYmYiOjE2MjgxNzg1OTAsIm5hbWVzcGFjZXMiOlsibmFtZXNwYWNlMSIsIm5hbWVzcGFjZTIiXX0.bOiL4Bz4uQcF4t2FDqI081jrpO9AS3RyRNAhN63mnxY`
+	const oldToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJ1c2VybmFtZSIsImlhdCI6MTYyOTQ2MTIxNS4zMDg4NjMsImlzcyI6Imlzc3VlciIsIm5iZiI6MTYyOTQ2MTIxNS4zMDg4NjMsIm5hbWVzcGFjZXMiOlsibmFtZXNwYWNlMSIsIm5hbWVzcGFjZTIiXX0.suZSwZfDuLVdAGYy3rEJE0T3sSvq-qPi9SoOizMLkas`
+
+	/*
+		{
+			"jti": "username",
+			"iat": 1629461023,
+			"iss": "issuer",
+			"nbf": 1629461023,
+			"namespaces": [
+				"namespace1",
+				"namespace2"
+			]
+		}
+	*/
+	const token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJ1c2VybmFtZSIsImlhdCI6MTYyOTQ2MTAyMywiaXNzIjoiaXNzdWVyIiwibmJmIjoxNjI5NDYxMDIzLCJuYW1lc3BhY2VzIjpbIm5hbWVzcGFjZTEiLCJuYW1lc3BhY2UyIl19.MEQPTHAQNBQbn4pnqIJQctRgqnHcuJTsiHCiWmK_7ZE`
 
 	th := NewTokenHandler("thesecret", "issuer")
 
