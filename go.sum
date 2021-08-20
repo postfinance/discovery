@@ -513,8 +513,8 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
-github.com/zbindenren/king v0.2.0 h1:ssQI1NUKssn4+VnHYgRb/HYXh14dcRXz4KOVOniDjD0=
-github.com/zbindenren/king v0.2.0/go.mod h1:Ba2jL6BDjRnn6rES8HCZjh3zRcaywctK8dN1jGPyP5w=
+github.com/zbindenren/king v0.3.0 h1:nDS76EoiME3H8ciBkMZ5CULxcj0EUejAyZ/RuhDDtLM=
+github.com/zbindenren/king v0.3.0/go.mod h1:Ba2jL6BDjRnn6rES8HCZjh3zRcaywctK8dN1jGPyP5w=
 github.com/zbindenren/sfmt v0.1.0 h1:3jsWp9A85MsYpjMr7WWW5K5omHvdRmMw4EShx6+SFZI=
 github.com/zbindenren/sfmt v0.1.0/go.mod h1:VwVBAQUbqRU7wiHoyO9xB19xemK6RLz2rtrM21pbAWI=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
