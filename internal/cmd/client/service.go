@@ -161,57 +161,7 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 	var lastErr error
 
 	if s.UnResolved {
-		ctx, cancel := g.ctx()
-		defer cancel()
-
-		r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{})
-		if err != nil {
-			return err
-		}
-
-		services := convert.ServicesFromPB(r.GetServices())
-
-		unresolved, err := services.UnResolved()
-		if err != nil {
-			return err
-		}
-
-		if len(unresolved) == 0 {
-			l.Info("no unresolved services found")
-		}
-
-		unResolvedPercent := float64(len(unresolved)) / float64(len(services)) * 100
-
-		if unResolvedPercent > s.Percent {
-			return fmt.Errorf("maximum %f%% services are allowed to be unregistered", s.Percent)
-		}
-
-		for i := range unresolved {
-			svc := unresolved[i]
-
-			l.Debugw("unregister service", svc.KeyVals()...)
-
-			ctx, cancel := g.ctx()
-			defer cancel()
-
-			_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
-				Namespace: svc.Namespace,
-				Id:        svc.Endpoint.String(),
-			})
-
-			if err != nil {
-				lastErr = err
-				l.Errorw("failed to unregister", "service", svc.Endpoint.String(), "namespace", svc.Namespace, "err", err)
-
-				continue
-			}
-		}
-
-		if lastErr != nil {
-			return errors.New("unregister service failed")
-		}
-
-		return nil
+		return s.unRegisterUnresolved(g, l, cli)
 	}
 
 	if len(s.Endpoints) > 0 && s.Namespace == "" {
@@ -230,6 +180,62 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		if err != nil {
 			lastErr = err
 			l.Errorw("failed to unregister", "service", ep, "namespace", s.Namespace, "err", err)
+
+			continue
+		}
+	}
+
+	if lastErr != nil {
+		return errors.New("unregister service failed")
+	}
+
+	return nil
+}
+
+func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger, cli discoveryv1.ServiceAPIClient) error {
+	var lastErr error
+
+	ctx, cancel := g.ctx()
+	defer cancel()
+
+	r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{})
+	if err != nil {
+		return err
+	}
+
+	services := convert.ServicesFromPB(r.GetServices())
+
+	unresolved, err := services.UnResolved()
+	if err != nil {
+		return err
+	}
+
+	if len(unresolved) == 0 {
+		l.Info("no unresolved services found")
+	}
+
+	unResolvedPercent := float64(len(unresolved)) / float64(len(services)) * 100
+
+	if unResolvedPercent > s.Percent {
+		return fmt.Errorf("maximum %f%% services are allowed to be unregistered", s.Percent)
+	}
+
+	for i := range unresolved {
+		svc := unresolved[i]
+
+		l.Debugw("unregister service", svc.KeyVals()...)
+
+		ctx, cancel := g.ctx()
+		defer cancel()
+
+		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
+			Namespace: svc.Namespace,
+			Id:        svc.Endpoint.String(),
+		})
+
+		if err != nil {
+			lastErr = err
+			l.Errorw("failed to unregister", "service", svc.Endpoint.String(), "namespace", svc.Namespace, "err", err)
 
 			continue
 		}
