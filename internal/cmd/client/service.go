@@ -30,6 +30,7 @@ type serviceList struct {
 	Output        string `short:"o" default:"table" help:"Output formats. Valid formats: json, yaml, csv, table."`
 	SortBy        string `default:"endpoint" help:"Sort services by endpoint or modification date (allowed values: endpoint or date)" enum:"endpoint,date"`
 	Headers       bool   `short:"H" help:"Show headers."`
+	UnResolved    bool   `short:"u" help:"List only services that cannot be resolved by the local resolver." name:"unresolved"`
 	Namespace     string `short:"n" help:"Filter services by namespace."`
 	serviceFilter `prefix:"filter-"`
 }
@@ -68,6 +69,15 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 		services.SortByDate()
 	default:
 		return fmt.Errorf("unsupported sort type '%s'", s.SortBy)
+	}
+
+	if s.UnResolved {
+		unresolved, err := services.UnResolved()
+		if err != nil {
+			return err
+		}
+
+		services = unresolved
 	}
 
 	sw := sfmt.SliceWriter{
@@ -132,8 +142,10 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 }
 
 type serviceUnRegister struct {
-	Endpoints []string `arg:"true" optional:"true" help:"The service endpoint URLs or IDs." env:"DISCOVERY_ENDPOINTS"`
-	Namespace string   `short:"n" help:"The namespace for the service" default:"default" required:"true"`
+	Endpoints  []string `arg:"true" optional:"true" help:"The service endpoint URLs or IDs." env:"DISCOVERY_ENDPOINTS"`
+	Namespace  string   `short:"n" help:"The namespace for the service" xor:"X"`
+	UnResolved bool     `short:"u" help:"Unregister all services that cannot be resolved by the local resolver." xor:"X" name:"unresolved" group:"Unresolved"`
+	Percent    float64  `short:"p" help:"The maximum number of unresolved services in percent that are allowed to be unregistered at once." default:"1.0" group:"Unresolved"`
 }
 
 func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
@@ -142,7 +154,69 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		return err
 	}
 
+	if s.UnResolved && len(s.Endpoints) > 0 {
+		return fmt.Errorf("unresolved cannot be used in combination with endpoints")
+	}
+
 	var lastErr error
+
+	if s.UnResolved {
+		ctx, cancel := g.ctx()
+		defer cancel()
+
+		r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{})
+		if err != nil {
+			return err
+		}
+
+		services := convert.ServicesFromPB(r.GetServices())
+
+		unresolved, err := services.UnResolved()
+		if err != nil {
+			return err
+		}
+
+		if len(unresolved) == 0 {
+			l.Info("no unresolved services found")
+		}
+
+		unResolvedPercent := float64(len(unresolved)) / float64(len(services)) * 100
+
+		if unResolvedPercent > s.Percent {
+			return fmt.Errorf("maximum %f%% services are allowed to be unregistered", s.Percent)
+		}
+
+		for i := range unresolved {
+			svc := unresolved[i]
+
+			l.Debugw("unregister service", svc.KeyVals()...)
+
+			ctx, cancel := g.ctx()
+			defer cancel()
+
+			_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
+				Namespace: svc.Namespace,
+				Id:        svc.Endpoint.String(),
+			})
+
+			if err != nil {
+				lastErr = err
+				l.Errorw("failed to unregister", "service", svc.Endpoint.String(), "namespace", svc.Namespace, "err", err)
+
+				continue
+			}
+		}
+
+		if lastErr != nil {
+			return errors.New("unregister service failed")
+		}
+
+		return nil
+	}
+
+	if len(s.Endpoints) > 0 && s.Namespace == "" {
+		return fmt.Errorf("no namespace specified")
+	}
 
 	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
@@ -155,7 +229,7 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 
 		if err != nil {
 			lastErr = err
-			l.Errorw("failed to unregister", "service", ep, "err", err)
+			l.Errorw("failed to unregister", "service", ep, "namespace", s.Namespace, "err", err)
 
 			continue
 		}

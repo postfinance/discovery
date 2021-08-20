@@ -2,9 +2,11 @@
 package discovery
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 	"regexp"
 	"sort"
@@ -17,6 +19,10 @@ import (
 var (
 	nameRegexp  = regexp.MustCompile("^[[:alnum:]_-]+$")
 	labelRegexp = regexp.MustCompile("[a-zA-Z_][a-zA-Z0-9_]*.")
+)
+
+const (
+	dnsResolveTimeout = 10 * time.Second
 )
 
 // Service contains all information for service discovery.
@@ -184,6 +190,19 @@ func (s Service) MarshalJSON() ([]byte, error) {
 	return json.Marshal(raw)
 }
 
+// KeyVals represents the service as slice of interface.
+func (s Service) KeyVals() []interface{} {
+	return []interface{}{
+		"id", s.ID,
+		"name", s.Name,
+		"namespace", s.Namespace,
+		"endpoint", s.Endpoint,
+		"modified", s.Modified,
+		"selector", s.Selector,
+		"description", s.Description,
+	}
+}
+
 // Services is a slice of Services
 type Services []Service
 
@@ -257,17 +276,44 @@ func (s Services) SortByDate() {
 	})
 }
 
-// KeyVals represents the service as slice of interface.
-func (s Service) KeyVals() []interface{} {
-	return []interface{}{
-		"id", s.ID,
-		"name", s.Name,
-		"namespace", s.Namespace,
-		"endpoint", s.Endpoint,
-		"modified", s.Modified,
-		"selector", s.Selector,
-		"description", s.Description,
+// UnResolved returns services that cannot be resolved
+// using the local resolver.
+func (s Services) UnResolved() (Services, error) {
+	unresolved := make(Services, 0, len(s))
+
+	for i := range s {
+		isResolvable, err := s[i].isResolvable()
+		if err != nil {
+			return Services{}, err
+		}
+
+		if !isResolvable {
+			unresolved = append(unresolved, s[i])
+		}
 	}
+
+	return unresolved, nil
+}
+
+func (s Service) isResolvable() (bool, error) {
+	host := strings.Split(s.Endpoint.Host, ":")[0]
+
+	ctx, cancel := context.WithTimeout(context.Background(), dnsResolveTimeout)
+	defer cancel()
+
+	_, err := net.DefaultResolver.LookupHost(ctx, host)
+	if err != nil {
+		var dnsError *net.DNSError
+		if errors.As(err, &dnsError) {
+			if dnsError.IsNotFound {
+				return false, nil
+			}
+		}
+
+		return false, err
+	}
+
+	return true, nil
 }
 
 // Labels represents key value pairs.

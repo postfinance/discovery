@@ -308,6 +308,17 @@ func TestFilterService(t *testing.T) {
 
 }
 
+func TestUnResolved(t *testing.T) {
+	services := Services{
+		*MustNewService("example", "http://example.com:9999"),
+		*MustNewService("not-resovable", "http://not-resolvable.example.com:9999"),
+	}
+
+	unresolved, err := services.UnResolved()
+	require.NoError(t, err)
+	assert.Equal(t, Services{services[1]}, unresolved)
+}
+
 func TestLabelValidate(t *testing.T) {
 	var tt = []struct {
 		labels      Labels
