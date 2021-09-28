@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/exporter"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 )
 
@@ -178,6 +179,35 @@ func NamespacesFromPB(s []*discoveryv1.Namespace) discovery.Namespaces {
 
 	for i := range s {
 		result = append(result, *NamespaceFromPB(s[i]))
+	}
+
+	return result
+}
+
+// TargetGroupToPB converts *exporter.TargetGroup to discoveryv1.TargetGroup.
+func TargetGroupToPB(t *exporter.TargetGroup) *discoveryv1.TargetGroup {
+	pb := &discoveryv1.TargetGroup{
+		Targets: t.Targets,
+		Labels:  t.Labels,
+	}
+
+	return pb
+}
+
+// TargetGroupFromPB converts *discoveryv1.TargetGroup to *exporter.TargetGroup.
+func TargetGroupFromPB(t *discoveryv1.TargetGroup) *exporter.TargetGroup {
+	return &exporter.TargetGroup{
+		Targets: t.GetTargets(),
+		Labels:  t.GetLabels(),
+	}
+}
+
+// TargetGroupsToPB converts []exporter.TargetGroup to []*discoveryv1.TargetGroup
+func TargetGroupsToPB(t []exporter.TargetGroup) []*discoveryv1.TargetGroup {
+	result := make([]*discoveryv1.TargetGroup, 0, len(t))
+
+	for i := range t {
+		result = append(result, TargetGroupToPB(&t[i]))
 	}
 
 	return result

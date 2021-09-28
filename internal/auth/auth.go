@@ -142,7 +142,7 @@ func authorizeUser(ctx context.Context, rwRoles ...string) error {
 		return status.Errorf(codes.Unauthenticated, "unauthententicated user")
 	}
 
-	// following methods are only allowed when use has one of rwRoles.
+	// following methods are only allowed when user has a rw role.
 	switch fullMethod {
 	case "/postfinance.discovery.v1.NamespaceAPI/RegisterNamespace":
 		if u.IsMachine() || !u.HasRole(rwRoles...) {

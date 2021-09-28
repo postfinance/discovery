@@ -11,5 +11,7 @@ plugins:
     path: ./bin/protoc-gen-go-grpc
   - name: grpc-gateway
     out: pkg/discoverypb
-    opt: paths=source_relative
+    opt:
+      - paths=source_relative
+      - allow_repeated_fields_in_body=true
     path: ./bin/protoc-gen-grpc-gateway

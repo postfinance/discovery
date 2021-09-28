@@ -8,6 +8,7 @@ option java_outer_classname = "ServiceApiProto";
 option java_package = "ch.postfinance.discovery.v1";
 
 import "postfinance/discovery/v1/service.proto";
+import "postfinance/discovery/v1/targetgroup.proto";
 import "google/api/annotations.proto";
 
 // ServiceAPI is responsible for registering and unregistering services.
@@ -29,6 +30,15 @@ service ServiceAPI {
   rpc ListService(ListServiceRequest) returns (ListServiceResponse) {
     option (google.api.http) = {
       get: "/v1/services"
+    };
+  }
+  // ListTargetGroup converts services to prometheus target groups. Those can
+  // be used for http_sd (see: https://prometheus.io/docs/prometheus/latest/http_sd/
+  // for more information).
+  rpc ListTargetGroup(ListTargetGroupRequest) returns (ListTargetGroupResponse) {
+    option (google.api.http) = {
+      get: "/v1/sd/{server}/{namespace}"
+      response_body: "targetgroups"
     };
   }
 }
@@ -60,4 +70,14 @@ message ListServiceRequest {
 
 message ListServiceResponse {
   repeated Service services = 1;
+}
+
+message ListTargetGroupRequest {
+  string server = 1;
+  string namespace = 2;
+  string config = 3;
+}
+
+message ListTargetGroupResponse {
+  repeated TargetGroup targetgroups = 1;
 }

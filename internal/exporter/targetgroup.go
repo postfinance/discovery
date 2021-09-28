@@ -6,15 +6,15 @@ import (
 	"github.com/postfinance/discovery"
 )
 
-// targetGroup represents a prometheus target group.
-type targetGroup struct {
+// TargetGroup represents a prometheus target group.
+type TargetGroup struct {
 	Targets []string         `json:"targets,omitempty"`
 	Labels  discovery.Labels `json:"labels,omitempty"`
 }
 
-// newTargetGroup creates a new target group from discovery.Service.
-func newTargetGroup(s service, cfg discovery.ExportConfig) targetGroup {
-	tg := targetGroup{
+// NewTargetGroup creates a new target group from discovery.Service.
+func NewTargetGroup(s discovery.Service, cfg discovery.ExportConfig) TargetGroup {
+	tg := TargetGroup{
 		Labels: make(discovery.Labels),
 	}
 

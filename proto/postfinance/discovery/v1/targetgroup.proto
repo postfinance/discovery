@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package postfinance.discovery.v1;
+
+option go_package = "postfinance/discovery/v1;discoveryv1";
+option java_multiple_files = true;
+option java_outer_classname = "TargetGroupProto";
+option java_package = "ch.postfinance.discovery.v1";
+
+import "google/protobuf/timestamp.proto";
+
+// TargetGrroup represents a prometheus target group.
+message TargetGroup {
+  // targets is a list of scrape targets
+  repeated string targets = 1;
+  // labesl are the corresponding labels
+  map<string, string> labels = 2;
+}

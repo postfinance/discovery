@@ -2,11 +2,14 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/auth"
+	"github.com/postfinance/discovery/internal/exporter"
 	"github.com/postfinance/discovery/internal/registry"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
@@ -124,6 +127,45 @@ func (a *API) ListService(_ context.Context, req *discoveryv1.ListServiceRequest
 
 	return &discoveryv1.ListServiceResponse{
 		Services: convert.ServicesToPB(s),
+	}, nil
+}
+
+// ListTargetGroup converts services to prometheus target groups.
+func (a *API) ListTargetGroup(ctx context.Context, in *discoveryv1.ListTargetGroupRequest) (*discoveryv1.ListTargetGroupResponse, error) {
+	var config discovery.ExportConfig
+
+	switch in.Config {
+	case "standard":
+		config = discovery.Standard
+	case "blackbox":
+		config = discovery.Blackbox
+	case "":
+		config = discovery.Standard
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "invalid exporter config: '%s'", in.Config)
+	}
+
+	s, err := a.r.ListService(in.Namespace, "")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "could not list services: %s", err)
+	}
+
+	serverFilter, err := regexp.Compile(fmt.Sprintf(`^%s$`, in.Server))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid regular expression: '%s'", in.Server)
+	}
+
+	s = s.Filter(discovery.ServiceByServer(serverFilter))
+
+	t := make([]*discoveryv1.TargetGroup, 0, len(s))
+
+	for i := range s {
+		tg := exporter.NewTargetGroup(s[i], config)
+		t = append(t, convert.TargetGroupToPB(&tg))
+	}
+
+	return &discoveryv1.ListTargetGroupResponse{
+		Targetgroups: t,
 	}, nil
 }
 

@@ -10,6 +10,9 @@
   - [API](#api)
     - [GRPC](#grpc)
     - [REST](#rest)
+  - [Prometheus Scrape Configuration](#prometheus-scrape-configuration)
+    - [http_sd](#http_sd)
+    - [file_sd](#file_sd)
   - [Systemd](#systemd)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -25,6 +28,7 @@ where no prometheus service discovery other than [file-sd](https://prometheus.io
 The service discovery consists of three components:
 
 * A GPRC service to register services and store them to [etcd](https://etcd.io) backend.
+* A rest endpoint for prometheus [http_sd](https://prometheus.io/docs/prometheus/latest/http_sd/).
 * An exporter service to export stored services to filesystem for prometheus [file-sd](https://prometheus.io/docs/guides/file-sd/).
 * CLI to register or unregister services and perform admin tasks.
 
@@ -239,6 +243,37 @@ which is the same as:
 
 ```console
 curl -v -X DELETE -H "accept: application/json" -H "authorization: bearer $TOKEN" 'http://localhost:3002/v1/services/windows?id=http%3A%2F%2Fexample.com%3A9182%2Fmetrics'
+```
+
+## Prometheus Scrape Configuration
+
+### http_sd
+The following is an example on how to configure prometheus for http_sd:
+
+```yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'http'
+    http_sd_configs:
+      - url: https://<service-discovery-url>:<port>/v1/sd/prometheus1.example.com/default?export-config=standard
+        authorization:
+          type: Bearer
+          credentials: <jwt token>
+```
+
+### file_sd
+The following is an example on how to configure prometheus for file_sd:
+
+```yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'file'
+    file_sd_configs:     
+      - files: [/tmp/discovery/prometheus1.example.com/default/*.json]
 ```
 
 ## Systemd

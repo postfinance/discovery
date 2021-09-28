@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/postfinance/discovery"
+	"github.com/postfinance/discovery/internal/exporter"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConvertServer(t *testing.T) {
@@ -27,4 +28,18 @@ func TestConvertNamespace(t *testing.T) {
 	assert.True(t, expected.Modified.Equal(n.Modified))
 	expected.Modified, n.Modified = time.Time{}, time.Time{}
 	assert.Equal(t, expected, n)
+}
+
+func TestConvertTargetGroup(t *testing.T) {
+	expected := exporter.TargetGroup{
+		Targets: []string{"target1", "target2"},
+		Labels: map[string]string{
+			"label1": "value1",
+		},
+	}
+
+	pb := TargetGroupToPB(&expected)
+	tg := TargetGroupFromPB(pb)
+
+	assert.EqualValues(t, expected, *tg)
 }

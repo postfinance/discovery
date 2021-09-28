@@ -88,10 +88,10 @@ func (f *file) data() (data []byte, hash string, err error) {
 		return []byte{}, "", nil
 	}
 
-	t := make([]targetGroup, 0, len(f.services))
+	t := make([]TargetGroup, 0, len(f.services))
 
 	for i := range svcs {
-		t = append(t, newTargetGroup(svcs[i], f.exportCfg))
+		t = append(t, NewTargetGroup(svcs[i].Service, f.exportCfg))
 	}
 
 	d, err := json.Marshal(t)

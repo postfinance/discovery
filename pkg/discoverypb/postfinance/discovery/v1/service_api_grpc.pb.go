@@ -24,6 +24,10 @@ type ServiceAPIClient interface {
 	UnRegisterService(ctx context.Context, in *UnRegisterServiceRequest, opts ...grpc.CallOption) (*UnRegisterServiceResponse, error)
 	// ListService lists all services.
 	ListService(ctx context.Context, in *ListServiceRequest, opts ...grpc.CallOption) (*ListServiceResponse, error)
+	// ListTargetGroup converts services to prometheus target groups. Those can
+	// be used for http_sd (see: https://prometheus.io/docs/prometheus/latest/http_sd/
+	// for more information).
+	ListTargetGroup(ctx context.Context, in *ListTargetGroupRequest, opts ...grpc.CallOption) (*ListTargetGroupResponse, error)
 }
 
 type serviceAPIClient struct {
@@ -61,6 +65,15 @@ func (c *serviceAPIClient) ListService(ctx context.Context, in *ListServiceReque
 	return out, nil
 }
 
+func (c *serviceAPIClient) ListTargetGroup(ctx context.Context, in *ListTargetGroupRequest, opts ...grpc.CallOption) (*ListTargetGroupResponse, error) {
+	out := new(ListTargetGroupResponse)
+	err := c.cc.Invoke(ctx, "/postfinance.discovery.v1.ServiceAPI/ListTargetGroup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ServiceAPIServer is the server API for ServiceAPI service.
 // All implementations must embed UnimplementedServiceAPIServer
 // for forward compatibility
@@ -71,6 +84,10 @@ type ServiceAPIServer interface {
 	UnRegisterService(context.Context, *UnRegisterServiceRequest) (*UnRegisterServiceResponse, error)
 	// ListService lists all services.
 	ListService(context.Context, *ListServiceRequest) (*ListServiceResponse, error)
+	// ListTargetGroup converts services to prometheus target groups. Those can
+	// be used for http_sd (see: https://prometheus.io/docs/prometheus/latest/http_sd/
+	// for more information).
+	ListTargetGroup(context.Context, *ListTargetGroupRequest) (*ListTargetGroupResponse, error)
 	mustEmbedUnimplementedServiceAPIServer()
 }
 
@@ -86,6 +103,9 @@ func (UnimplementedServiceAPIServer) UnRegisterService(context.Context, *UnRegis
 }
 func (UnimplementedServiceAPIServer) ListService(context.Context, *ListServiceRequest) (*ListServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListService not implemented")
+}
+func (UnimplementedServiceAPIServer) ListTargetGroup(context.Context, *ListTargetGroupRequest) (*ListTargetGroupResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListTargetGroup not implemented")
 }
 func (UnimplementedServiceAPIServer) mustEmbedUnimplementedServiceAPIServer() {}
 
@@ -154,6 +174,24 @@ func _ServiceAPI_ListService_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServiceAPI_ListTargetGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListTargetGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceAPIServer).ListTargetGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/postfinance.discovery.v1.ServiceAPI/ListTargetGroup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceAPIServer).ListTargetGroup(ctx, req.(*ListTargetGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ServiceAPI_ServiceDesc is the grpc.ServiceDesc for ServiceAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -172,6 +210,10 @@ var ServiceAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListService",
 			Handler:    _ServiceAPI_ListService_Handler,
+		},
+		{
+			MethodName: "ListTargetGroup",
+			Handler:    _ServiceAPI_ListTargetGroup_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
