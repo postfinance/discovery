@@ -1,3 +1,40 @@
+## 0.8.0 (2021-09-28)
+
+
+### Bug Fixes
+
+* **discoveryd**: return `codes.NotFound` intead of `codes.Internal` not existing entities ([d3e63e61](https://github.com/postfinance/discovery/commit/d3e63e61))
+
+
+### Dependencies
+
+* **apimachinery**: 0.22.0 -> 0.22.1 ([d466678c](https://github.com/postfinance/discovery/commit/d466678c))
+* **apimachinery**: 0.22.1 -> 0.22.2 ([32997363](https://github.com/postfinance/discovery/commit/32997363))
+* **genproto**: 0.0.0-20210804223703-f1db76f3300d -> 0.0.0-20210820002220-43fce44e7af1 ([6f114595](https://github.com/postfinance/discovery/commit/6f114595))
+* **genproto**: 0.0.0-20210903162649-d08c68adba83 -> 0.0.0-20210927142257-433400c27d05 ([54ae20ad](https://github.com/postfinance/discovery/commit/54ae20ad))
+* **go**: 1.16 -> 1.17 ([65a5c976](https://github.com/postfinance/discovery/commit/65a5c976))
+* **go-oidc**: 3.0.0 -> 3.1.0 ([cb4efdc0](https://github.com/postfinance/discovery/commit/cb4efdc0))
+* **grpc**: 1.39.0 -> 1.40.0 ([3a8938e1](https://github.com/postfinance/discovery/commit/3a8938e1))
+* **grpc**: 1.40.0 -> 1.41.0 ([ddf370c9](https://github.com/postfinance/discovery/commit/ddf370c9))
+* **grpc-gateway**: 2.5.0 -> 2.6.0 ([749eb613](https://github.com/postfinance/discovery/commit/749eb613))
+* **jwt**: 4.0.0 -> 4.1.0 ([c1c62c2f](https://github.com/postfinance/discovery/commit/c1c62c2f))
+* **king**: 0.2.0 -> 0.3.0 ([ecbbf305](https://github.com/postfinance/discovery/commit/ecbbf305))
+* **term**: 0.0.0-20210615171337-6886f2dfbf5b -> 0.0.0-20210927222741-03fcf44c2211 ([998d10d8](https://github.com/postfinance/discovery/commit/998d10d8))
+* **zap**: 1.18.1 -> 1.19.0 ([b34b8678](https://github.com/postfinance/discovery/commit/b34b8678))
+* **zap**: 1.19.0 -> 1.19.1 ([2e1102e0](https://github.com/postfinance/discovery/commit/2e1102e0))
+
+
+### New Features
+
+* **cli**: add the possibility to list and unregister all unresolvable services ([#21](https://github.com/postfinance/discovery/issues/21), [87301176](https://github.com/postfinance/discovery/commit/87301176))
+* **discoveryd**: support of prometheus http_sd ([#23](https://github.com/postfinance/discovery/issues/23), [4862d3d1](https://github.com/postfinance/discovery/commit/4862d3d1))
+  > Now it is possible to use the rest endpoint
+  > `/v1/sd/<prometheus-server>/<namespace>` as
+  > http service discovery. See Readme for more
+  > information.
+
+
+
 ## 0.7.8 (2021-08-05)
 
 
