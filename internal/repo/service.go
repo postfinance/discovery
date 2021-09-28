@@ -89,7 +89,7 @@ func (s *Service) Delete(id, namespace string) error {
 	}
 
 	if count == 0 {
-		return fmt.Errorf("%s/%s: %v", namespace, id, ErrNotFound)
+		return fmt.Errorf("%s/%s: %w", namespace, id, ErrNotFound)
 	}
 
 	return nil

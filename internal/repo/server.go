@@ -58,6 +58,10 @@ func (s *Server) Get(serverName string) (*discovery.Server, error) {
 	}))
 
 	if err != nil {
+		if errors.Is(err, store.ErrKeyNotFound) {
+			return nil, ErrNotFound
+		}
+
 		return nil, err
 	}
 

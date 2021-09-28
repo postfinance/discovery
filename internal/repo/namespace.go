@@ -65,7 +65,7 @@ func (n *Namespace) Delete(name string) error {
 	}
 
 	if count == 0 {
-		return fmt.Errorf("%s: %v", name, ErrNotFound)
+		return fmt.Errorf("%s: %w", name, ErrNotFound)
 	}
 
 	return nil

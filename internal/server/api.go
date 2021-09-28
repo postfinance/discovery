@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/exporter"
 	"github.com/postfinance/discovery/internal/registry"
+	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	"google.golang.org/grpc/codes"
@@ -46,7 +48,12 @@ func (a *API) RegisterServer(_ context.Context, req *discoveryv1.RegisterServerR
 // UnregisterServer unregisters a server.
 func (a *API) UnregisterServer(_ context.Context, req *discoveryv1.UnregisterServerRequest) (*discoveryv1.UnregisterServerResponse, error) {
 	if err := a.r.UnRegisterServer(req.GetName()); err != nil {
-		return nil, status.Errorf(codes.Internal, "could not unregister server %s in store: %s", req.GetName(), err)
+		c := codes.Internal
+		if errors.Is(err, repo.ErrNotFound) {
+			c = codes.NotFound
+		}
+
+		return nil, status.Errorf(c, "could not unregister server %s in store: %s", req.GetName(), err)
 	}
 
 	return &discoveryv1.UnregisterServerResponse{}, nil
@@ -112,7 +119,12 @@ func (a *API) UnRegisterService(ctx context.Context, req *discoveryv1.UnRegister
 	}
 
 	if err := a.r.UnRegisterService(req.GetId(), req.GetNamespace()); err != nil {
-		return nil, status.Errorf(codes.Internal, "could not unregister service %s in namespace %s: %s", req.GetId(), req.GetNamespace(), err)
+		c := codes.Internal
+		if errors.Is(err, repo.ErrNotFound) {
+			c = codes.NotFound
+		}
+
+		return nil, status.Errorf(c, "could not unregister service %s in namespace %s: %s", req.GetId(), req.GetNamespace(), err)
 	}
 
 	return &discoveryv1.UnRegisterServiceResponse{}, nil
@@ -193,7 +205,12 @@ func (a *API) RegisterNamespace(_ context.Context, req *discoveryv1.RegisterName
 // UnregisterNamespace unregisters a namespace.
 func (a *API) UnregisterNamespace(_ context.Context, req *discoveryv1.UnregisterNamespaceRequest) (*discoveryv1.UnregisterNamespaceResponse, error) {
 	if err := a.r.UnRegisterNamespace(req.Name); err != nil {
-		return nil, status.Errorf(codes.Internal, "could not unregister namespace %s in store: %s", req.GetName(), err)
+		c := codes.Internal
+		if errors.Is(err, repo.ErrNotFound) {
+			c = codes.NotFound
+		}
+
+		return nil, status.Errorf(c, "could not unregister namespace %s in store: %s", req.GetName(), err)
 	}
 
 	return &discoveryv1.UnregisterNamespaceResponse{}, nil
