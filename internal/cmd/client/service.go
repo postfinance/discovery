@@ -252,7 +252,7 @@ type serviceFilter struct {
 	Name     string `short:"N" help:"Filter services by job name (regular expression)."`
 	Server   string `short:"S" help:"Filter services by server name (regular expression)."`
 	Endpoint string `short:"e" help:"Filter services by endpoint (regular expression)."`
-	Selector string `short:"s" help:"Filter services by selector."`
+	Selector string `short:"s" help:"Filter services by label selector."`
 }
 
 func (s serviceFilter) filters() ([]discovery.FilterFunc, error) {
