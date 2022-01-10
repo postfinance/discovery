@@ -1,3 +1,19 @@
+## 0.8.1 (2022-01-10)
+
+
+### Bug Fixes
+
+* **client**: use better help for filter by label selector flag ([b987d41e](https://github.com/postfinance/discovery/commit/b987d41e))
+* **discovery**: help displays positional argument as required ([#13](https://github.com/postfinance/discovery/issues/13), [7653c937](https://github.com/postfinance/discovery/commit/7653c937))
+
+
+### Dependencies
+
+* **enproto**: 0.0.0-20210927142257-433400c27d05 -> 0.0.0-20211007155348-82e027067bd4 ([d67b5bc2](https://github.com/postfinance/discovery/commit/d67b5bc2))
+* **oauth2**: 0.0.0-20210819190943-2bc19b11175f -> 0.0.0-20211005180243-6b3c2da341f1 ([1971b8e1](https://github.com/postfinance/discovery/commit/1971b8e1))
+
+
+
 ## 0.8.0 (2021-09-28)
 
 
