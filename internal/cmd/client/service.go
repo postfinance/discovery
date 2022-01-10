@@ -310,7 +310,7 @@ func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	d, err := ioutil.ReadFile(s.Path)
+	d, err := os.ReadFile(s.Path)
 	if err != nil {
 		return err
 	}
@@ -360,7 +360,7 @@ func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 			return fmt.Errorf("failed to marshal failed services: %w", err)
 		}
 
-		if err := ioutil.WriteFile(file.Name(), d, 0600); err != nil {
+		if err := os.WriteFile(file.Name(), d, 0o600); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", file.Name(), err)
 		}
 	}
