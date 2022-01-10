@@ -19,7 +19,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/stretchr/testify v1.7.0
-	github.com/zbindenren/king v0.3.0
+	github.com/zbindenren/king v0.3.1
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1
