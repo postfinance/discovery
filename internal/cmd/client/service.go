@@ -93,7 +93,7 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 
 type serviceRegister struct {
 	Endpoints []string         `short:"e" help:"The service endpoint URLs." required:"true"`
-	Name      string           `arg:"true" optional:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
+	Name      string           `arg:"true" required:"true" help:"The service name. This will represent the job name in prometheus." env:"DISCOVERY_NAME"`
 	Labels    discovery.Labels `short:"l" help:"Labels for the service." mapsep:","`
 	Namespace string           `short:"n" help:"The namespace for the service" default:"default" required:"true"`
 	Selector  string           `short:"s" help:"Kubernetes style selectors (key=value) to select servers with specific labels."`
