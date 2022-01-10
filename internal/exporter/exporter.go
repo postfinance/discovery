@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	dirPermissions = 0750
+	dirPermissions = 0o750
 )
 
 // Exporter writes services from store to filesystem for prometheus

@@ -205,12 +205,12 @@ func (n *namespaceRepoMock) List() (discovery.Namespaces, error) {
 func newNamespaceMock() *namespaceRepoMock {
 	mock := &namespaceRepoMock{
 		namespaces: map[string]*discovery.Namespace{
-			"default": &discovery.Namespace{
+			"default": {
 				Name:     "default",
 				Export:   discovery.Standard,
 				Modified: time.Now(),
 			},
-			"appl-blackbox": &discovery.Namespace{
+			"appl-blackbox": {
 				Name:     "appl-blackbox",
 				Export:   discovery.Blackbox,
 				Modified: time.Now(),

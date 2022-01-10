@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -57,7 +56,7 @@ func NewClient(endPoint, clientID string, opts ...ClientOption) (*Client, error)
 		opt(&c)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.endPoint, ".well-known/openid-configuration"), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.endPoint, ".well-known/openid-configuration"), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("creating token endpoint request: %w", err)
 	}
@@ -222,7 +221,7 @@ func (c *Client) requestToken(data url.Values) (*Token, error) {
 		return nil, err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("reading response body from token request: %w", err)
 	}
@@ -291,10 +290,10 @@ func (t *Token) parse() error {
 
 func handleResponse(r *http.Response) error {
 	if r.StatusCode < 200 || r.StatusCode > 399 {
-		body, _ := ioutil.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
 
 		// reset the response body to the original unread state
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		var e errResponse
 		if err := json.Unmarshal(body, &e); err != nil {

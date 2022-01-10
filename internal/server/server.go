@@ -27,6 +27,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 )
@@ -40,7 +41,7 @@ const (
 
 var (
 	//go:embed swagger/*
-	static embed.FS //nolint: gochecknoglobals // no other possibility
+	static embed.FS
 )
 
 // Server represents the discovery server.
@@ -222,12 +223,12 @@ func (s *Server) startHTTP(ctx context.Context) error {
 
 	gwmux := runtime.NewServeMux()
 
-	err = discoveryv1.RegisterServiceAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithInsecure()})
+	err = discoveryv1.RegisterServiceAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 	if err != nil {
 		return err
 	}
 
-	err = discoveryv1.RegisterServerAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithInsecure()})
+	err = discoveryv1.RegisterServerAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 	if err != nil {
 		return err
 	}

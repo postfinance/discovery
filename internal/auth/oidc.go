@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -45,7 +45,7 @@ func NewVerifier(url, clientID string, timeout time.Duration, transport http.Rou
 // AppendCertsToSystemPool adds certificates to system cert pool. If it is not possible to get system pool,
 // certificates are added to an emptycert pool.
 func AppendCertsToSystemPool(pemFile string) (*x509.CertPool, error) {
-	caCert, err := ioutil.ReadFile(pemFile) //nolint: gosec // we need to read that file
+	caCert, err := os.ReadFile(pemFile) //nolint: gosec // we need to read that file
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file '%s': %w", pemFile, err)
 	}

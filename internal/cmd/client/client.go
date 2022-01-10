@@ -4,7 +4,6 @@ package client
 import (
 	"context"
 	"crypto/x509"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/zbindenren/king"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/yaml.v3"
 )
@@ -49,7 +49,7 @@ func (g Globals) ctx() (context.Context, context.CancelFunc) {
 }
 
 func (g Globals) conn() (*grpc.ClientConn, error) {
-	dialOption := grpc.WithInsecure()
+	dialOption := grpc.WithTransportCredentials(insecure.NewCredentials())
 
 	if !g.Insecure {
 		pool, err := x509.SystemCertPool()
@@ -131,7 +131,7 @@ type token struct {
 func (g Globals) loadToken() (*token, error) {
 	path := kong.ExpandPath(g.TokenPath)
 
-	d, err := ioutil.ReadFile(path) //nolint: gosec // just reading token
+	d, err := os.ReadFile(path) //nolint: gosec // just reading token
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (g Globals) saveToken(t *auth.Token) error {
 	path := kong.ExpandPath(g.TokenPath)
 	dir := filepath.Dir(path)
 
-	if err := os.MkdirAll(dir, 0750); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return err
 	}
 
@@ -158,7 +158,7 @@ func (g Globals) saveToken(t *auth.Token) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path, d, 0600)
+	return os.WriteFile(path, d, 0o600)
 }
 
 // getToken loads or asks for user or machine token. If it is

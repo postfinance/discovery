@@ -41,7 +41,7 @@ func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, re
 		return err
 	}
 
-	if err := os.MkdirAll(e.Directory, 0700); err != nil {
+	if err := os.MkdirAll(e.Directory, 0o700); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", e.Directory, err)
 	}
 
