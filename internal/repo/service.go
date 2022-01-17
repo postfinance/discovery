@@ -100,7 +100,7 @@ func (s *Service) Delete(id, namespace string) error {
 func (s *Service) List(namespace, selector string) (discovery.Services, error) {
 	services := discovery.Services{}
 
-	_, err := s.backend.Get(path.Join(s.prefix, namespace), store.WithPrefix(), store.WithHandler(func(k, v []byte) error {
+	_, err := s.backend.Get(path.Join(s.prefix, namespace)+"/", store.WithPrefix(), store.WithHandler(func(k, v []byte) error {
 		svc := discovery.Service{}
 
 		err := json.Unmarshal(v, &svc)

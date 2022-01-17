@@ -157,7 +157,7 @@ func (a *API) ListTargetGroup(ctx context.Context, in *discoveryv1.ListTargetGro
 		return nil, status.Errorf(codes.InvalidArgument, "invalid exporter config: '%s'", in.Config)
 	}
 
-	s, err := a.r.ListService(in.Namespace, "")
+	s, err := a.r.ListService(in.GetNamespace(), "")
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "could not list services: %s", err)
 	}
