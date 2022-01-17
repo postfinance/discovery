@@ -1,6 +1,7 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
+
+**Table of Contents** _generated with [DocToc](https://github.com/thlorenz/doctoc)_
 
 - [discovery](#discovery)
   - [Architecture](#architecture)
@@ -18,19 +19,20 @@
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # discovery
+
 Service discovery for prometheus with etcd backend. This service can be useful in environments
-where no prometheus service discovery other than [file-sd](https://prometheus.io/docs/guides/file-sd/) is possible.
+where no prometheus service discovery other than [http_sd](https://prometheus.io/docs/prometheus/latest/http_sd/) is possible.
 
 ## Architecture
 
-![Architecture](./architecture.svg)
+![Architecture](./architecture.png)
 
 The service discovery consists of three components:
 
-* A GPRC service to register services and store them to [etcd](https://etcd.io) backend.
-* A rest endpoint for prometheus [http_sd](https://prometheus.io/docs/prometheus/latest/http_sd/).
-* An exporter service to export stored services to filesystem for prometheus [file-sd](https://prometheus.io/docs/guides/file-sd/).
-* CLI to register or unregister services and perform admin tasks.
+- A GPRC service to register services and store them to [etcd](https://etcd.io) backend.
+- A rest endpoint for prometheus [http_sd](https://prometheus.io/docs/prometheus/latest/http_sd/).
+- ~~An exporter service to export stored services to filesystem for prometheus [file-sd](https://prometheus.io/docs/guides/file-sd/)~~.
+- CLI to register or unregister services and perform admin tasks.
 
 ## Example Workflow:
 
@@ -39,9 +41,11 @@ First we have to register a (prometheus) server:
 ```console
 $ discovery server register prometheus1.example.com --labels=environment=test
 ```
+
 The labels above can be used on service registration to select a server via kubernetes style label selectors (see below).
 
 To list all registered servers:
+
 ```console
 $ discovery server list
 NAME                    MODIFIED             STATE  LABELS
@@ -59,7 +63,7 @@ The selector is a kubernetes style [label selector](https://kubernetes.io/docs/c
 When you start the discovery service with `--replicas=n` and n>1, a service is distributed to n servers with the corresponding labels. The service discovery uses a [consistent hashing algorithm](https://arxiv.org/pdf/1406.2294v1.pdf)
 to distribute services among servers.
 
-You can see the regsitered services:
+You can see the registered services:
 
 ```console
 $ discovery service list
@@ -97,20 +101,10 @@ blackbox default-blackbox e988791c-2c4e-5eeb-b3b8-db3c0cf82719 http://blackbox.e
 example  default          93c156b1-f218-5d79-88a5-219307e59d29 http://example.com/metrics  prometheus1.example.com label1=value1,label2=value2 environment=test 2021-02-05T07:59:17Z
 ```
 
-Now you can start the exporter service on the corresponding prometheus server:
+You can verify that the http service discovery endpoint works (see [below](#authentication) on how to get a token) with the following command:
 
 ```console
-$ discoveryd exporter --directory=/tmp/discovery --server=prometheus1.example.com
-2021-02-05T09:08:29.671+0100    INFO    server/exporter.go:28   starting exporter       {"buildinfo-date": "2021-02-04T06:48:33Z", "buildinfo-go": "go1.15.5", "buildinfo-revision": "1c8d0652", "buildinfo-version": "v0.1.0-SNAPSHOT-1c8d065", "debug": false, "directory": "/tmp/discovery", "etcd-auto-sync-interval": "10s", "etcd-ca": "", "etcd-ca-file": "", "etcd-cert": "", "etcd-cert-file": "", "etcd-dial-timeout": "5s", "etcd-endpoints": ["localhost:2379"], "etcd-key": "", "etcd-key-file": "", "etcd-password": "", "etcd-prefix": "/discovery", "etcd-request-timeout": "5s", "etcd-user": "", "profiler-enabled": false, "profiler-listen": ":6666", "profiler-timeout": "5m0s", "resync-interval": "1h0m0s", "server": "prometheus1.example.com", "show-config": false}
-2021-02-05T09:08:29.675+0100    INFO    exporter/exporter.go:76 sync services
-2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/default-blackbox/blackbox.json"}
-2021-02-05T09:08:29.677+0100    INFO    exporter/file.go:202    updating discovery file {"path": "/tmp/discovery/prometheus1.example.com/default/example.json"}
-```
-
-As you can see, the exporter created two files which can be used by prometheus for file_sd. The created files have different content depending on the namespace export configuration (`standard` or `blackbox`):
-
-```console
-$ cat /tmp/discovery/prometheus1.example.com/standard/default/example.json |jq
+$ curl -s -H  "authorization: bearer $TOKEN" 'http://localhost:3002/v1/sd/prometheus1.example.com/default' |jq
 [
   {
     "targets": [
@@ -128,18 +122,24 @@ $ cat /tmp/discovery/prometheus1.example.com/standard/default/example.json |jq
 ]
 ```
 
+And for the blackbox service:
+
 ```console
-$ cat /tmp/discovery/prometheus1.example.com/blackbox/default-blackbox/blackbox.json |jq
+$ curl -s -H  "authorization: bearer $TOKEN" 'http://localhost:3002/v1/sd/prometheus1.example.com/default-blackbox?config=blackbox' |jq
 [
   {
     "targets": [
       "http://blackbox.example.com"
-    ]
+    ],
+    "labels": {}
   }
 ]
 ```
 
+See [below](#http_sd) on how to configure prometheus for [http_sd](https://prometheus.io/docs/prometheus/latest/http_sd/).
+
 ## Authentication
+
 Discovery is meant to work with an openid connect server (Password Grant Flow). The following options exist for configuration:
 
 ```
@@ -183,7 +183,7 @@ You can use the created token for automating tasks. You can set the token as fol
 machine_token: <generated jwt token>
 ```
 
-With the above token you can regster services only (no namespaces or servers can be registered)
+With the above token you can register services only (no namespaces or servers can be registered)
 
 ## Configuration
 
@@ -210,6 +210,7 @@ oidc-endpoint: https://auth.example.com/auth/realms/discovery
 ## API
 
 ### GRPC
+
 The service discovery has a GRPC API. The proto files can be found [here](./proto/postfinance/discovery/v1). The generated GRPC go code is also in that directory. To send the authorization token with the go client you
 can use an [UnaryClientInterceptor](https://github.com/grpc/grpc-go/blob/master/interceptor.go) like below:
 
@@ -224,6 +225,7 @@ func buildClientInterceptor(token string) func(context.Context, string, interfac
 ```
 
 ### REST
+
 It is also possible to access the a rest api generated with [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway). The swagger api documentation is available under http://localhost:3002/swagger/
 (when running the server with default settings).
 
@@ -248,6 +250,7 @@ curl -v -X DELETE -H "accept: application/json" -H "authorization: bearer $TOKEN
 ## Prometheus Scrape Configuration
 
 ### http_sd
+
 The following is an example on how to configure prometheus for http_sd:
 
 ```yaml
@@ -255,7 +258,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'http'
+  - job_name: "http"
     http_sd_configs:
       - url: https://<service-discovery-url>:<port>/v1/sd/prometheus1.example.com/default?export-config=standard
         authorization:
@@ -263,23 +266,11 @@ scrape_configs:
           credentials: <jwt token>
 ```
 
-### file_sd
-The following is an example on how to configure prometheus for file_sd:
-
-```yaml
-global:
-  scrape_interval: 15s
-
-scrape_configs:
-  - job_name: 'file'
-    file_sd_configs:     
-      - files: [/tmp/discovery/prometheus1.example.com/default/*.json]
-```
-
 ## Systemd
+
 It is possible to register and unregister services on start/stop with systemd. An example for auto registering [node_exporter](https://github.com/prometheus/node_exporter):
 
-* `/usr/lib/systemd/system/node_exporter.service`:
+- `/usr/lib/systemd/system/node_exporter.service`:
 
 ```
 [Unit]
@@ -297,8 +288,7 @@ ExecStopPost=-/bin/discovery service unregister
 WantedBy=multi-user.target
 ```
 
-
-* `/etc/sysconfig/node_exporter`:
+- `/etc/sysconfig/node_exporter`:
 
 ```yaml
 LISTEN=:9549
@@ -308,7 +298,7 @@ DISCOVERY_ENDPOINTS="<endpoint_url>"
 DISCOVERY_NAME=node
 ```
 
-* `etc/discovery/config.yaml`:
+- `etc/discovery/config.yaml`:
 
 ```yaml
 address: <discovery-service-url>
