@@ -3,7 +3,7 @@ module github.com/postfinance/discovery
 go 1.16
 
 require (
-	github.com/alecthomas/kong v0.4.0
+	github.com/alecthomas/kong v0.4.1
 	github.com/coreos/go-oidc/v3 v3.1.0
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/golang/protobuf v1.5.2
