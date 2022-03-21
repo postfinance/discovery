@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/alecthomas/kong v0.5.0
 	github.com/coreos/go-oidc/v3 v3.1.0
-	github.com/golang-jwt/jwt/v4 v4.3.0
+	github.com/golang-jwt/jwt/v4 v4.4.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/renameio v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
