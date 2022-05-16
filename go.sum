@@ -345,8 +345,8 @@ github.com/postfinance/flash v0.3.0 h1:laeKYa4iOdqvWUyNgYxl6rT8XaEKvvS0eRAnFj5Vl
 github.com/postfinance/flash v0.3.0/go.mod h1:QNWuLgRFojddLVTZtUd2Fe+oKD7GLLzmryOEwy64p5s=
 github.com/postfinance/profiler v0.1.1 h1:tAcBpxzJa4rNU1HaYYs6XVw1sZedCsnrm2bF77vN/IY=
 github.com/postfinance/profiler v0.1.1/go.mod h1:jYKkz8IcLK87IX8J6geAKmD1bLxbnMe3KQnEp3OzJZM=
-github.com/postfinance/single v0.0.1 h1:FRRLEuthtSHHU4O2/0qgMuxUA1XT1pMD9PIPnpxR244=
-github.com/postfinance/single v0.0.1/go.mod h1:skwxOhhZxsPCdMG8qIQXhC7A4Xb7qTRS3r08MHnAzTU=
+github.com/postfinance/single v0.0.2 h1:YLjLxxeGDnsW93oK4CxxOFSVOOiBi1OyoK4ZTl5biJw=
+github.com/postfinance/single v0.0.2/go.mod h1:OYWUsdMIZK9eQyZYpAsMHN+j6+jXJ6RFUNqIWH0oC5U=
 github.com/postfinance/store v0.2.0 h1:jZrQElfMrWvQNEByOvadY+Y4GTw1BD2BfOPZt3/7pXY=
 github.com/postfinance/store v0.2.0/go.mod h1:CCWDT1I4uF0KB+FisMnv7DzKYgtIa2ea5h3/bI1vljI=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
