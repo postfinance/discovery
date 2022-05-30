@@ -10,7 +10,7 @@ require (
 	github.com/google/renameio v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.2
 	github.com/pkg/errors v0.9.1
 	github.com/postfinance/flash v0.3.0
 	github.com/postfinance/profiler v0.1.1
