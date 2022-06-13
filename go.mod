@@ -3,7 +3,7 @@ module github.com/postfinance/discovery
 go 1.16
 
 require (
-	github.com/alecthomas/kong v0.5.0
+	github.com/alecthomas/kong v0.6.0
 	github.com/coreos/go-oidc/v3 v3.2.0
 	github.com/golang-jwt/jwt/v4 v4.4.1
 	github.com/golang/protobuf v1.5.2
@@ -18,7 +18,7 @@ require (
 	github.com/postfinance/store v0.2.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/satori/go.uuid v1.2.0
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.7.2
 	github.com/zbindenren/king v0.3.1
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.21.0
