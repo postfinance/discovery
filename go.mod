@@ -26,7 +26,7 @@ require (
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/genproto v0.0.0-20220719170305-83ca9fad585f
 	google.golang.org/grpc v1.48.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.24.3
 	sigs.k8s.io/yaml v1.3.0 // indirect
