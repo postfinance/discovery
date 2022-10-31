@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/alecthomas/kong v0.7.0
-	github.com/coreos/go-oidc/v3 v3.2.0
+	github.com/coreos/go-oidc/v3 v3.4.0
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/protobuf v1.5.2
 	github.com/google/renameio v1.0.1
@@ -22,7 +22,7 @@ require (
 	github.com/zbindenren/king v0.3.1
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.23.0
-	golang.org/x/oauth2 v0.0.0-20220722155238-128564f6959c
+	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/genproto v0.0.0-20220805133916-01dd62135a58
 	google.golang.org/grpc v1.50.1
