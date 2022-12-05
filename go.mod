@@ -12,7 +12,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.13.0
 	github.com/pkg/errors v0.9.1
-	github.com/postfinance/flash v0.4.0
+	github.com/postfinance/flash v0.5.0
 	github.com/postfinance/profiler v0.1.1
 	github.com/postfinance/single v0.0.2
 	github.com/postfinance/store v0.2.0
