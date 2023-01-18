@@ -27,6 +27,7 @@ builds:
         - darwin
       goarch:
         - amd64
+        - arm64
       main: ./cmd/discovery/
       binary: discovery
       env:
@@ -39,7 +40,7 @@ nfpms:
         amd64: x86_64
         arm: ARM
         arm64: ARM64
-        darwin: macOS
+        darwin: darwin
         dragonfly: DragonFlyBSD
         freebsd: FreeBSD
         linux: Linux
@@ -81,7 +82,7 @@ archives:
       amd64: x86_64
       arm: ARM
       arm64: ARM64
-      darwin: macOS
+      darwin: darwin
       dragonfly: DragonFlyBSD
       freebsd: FreeBSD
       linux: Linux
@@ -97,7 +98,7 @@ archives:
       amd64: x86_64
       arm: ARM
       arm64: ARM64
-      darwin: macOS
+      darwin: darwin
       dragonfly: DragonFlyBSD
       freebsd: FreeBSD
       linux: Linux
