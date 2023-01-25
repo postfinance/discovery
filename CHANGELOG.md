@@ -90,6 +90,98 @@
 
 
 
+## 0.8.3 (2023-01-25)
+
+
+### Build System
+
+* **deps**: bump github.com/alecthomas/kong from 0.5.0 to 0.6.0 (#65) ([a1dfa4b3](https://github.com/postfinance/discovery/commit/a1dfa4b3))
+* **deps**: bump github.com/alecthomas/kong from 0.6.0 to 0.6.1 (#68) ([de21b5f3](https://github.com/postfinance/discovery/commit/de21b5f3))
+* **deps**: bump github.com/alecthomas/kong from 0.6.1 to 0.7.0 (#95) ([639f50ef](https://github.com/postfinance/discovery/commit/639f50ef))
+  > Bumps [github.com/alecthomas/kong](https://github.com/alecthomas/kong) from 0.6.1 to 0.7.0.
+  > - [Release notes](https://github.com/alecthomas/kong/releases)
+  > - [Commits](https://github.com/alecthomas/kong/compare/v0.6.1...v0.7.0)
+  > 
+  > ---
+  > updated-dependencies:
+  > - dependency-name: github.com/alecthomas/kong
+  >   dependency-type: direct:production
+  >   update-type: version-update:semver-minor
+  > ...
+* **deps**: bump github.com/alecthomas/kong from 0.7.0 to 0.7.1 (#102) ([fe248ae8](https://github.com/postfinance/discovery/commit/fe248ae8))
+* **deps**: bump github.com/coreos/go-oidc/v3 from 3.1.0 to 3.2.0 (#57) ([03f7fd11](https://github.com/postfinance/discovery/commit/03f7fd11))
+* **deps**: bump github.com/coreos/go-oidc/v3 from 3.2.0 to 3.4.0 (#86) ([7cc5a460](https://github.com/postfinance/discovery/commit/7cc5a460))
+* **deps**: bump github.com/golang-jwt/jwt/v4 from 4.4.1 to 4.4.2 (#70) ([8f010a90](https://github.com/postfinance/discovery/commit/8f010a90))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#60) ([5c49f0ff](https://github.com/postfinance/discovery/commit/5c49f0ff))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#61) ([28cf4c39](https://github.com/postfinance/discovery/commit/28cf4c39))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#64) ([bae94397](https://github.com/postfinance/discovery/commit/bae94397))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#74) ([4b55f76d](https://github.com/postfinance/discovery/commit/4b55f76d))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#78) ([f1b75d42](https://github.com/postfinance/discovery/commit/f1b75d42))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#93) ([abce63ea](https://github.com/postfinance/discovery/commit/abce63ea))
+* **deps**: bump github.com/grpc-ecosystem/grpc-gateway/v2 (#96) ([23816705](https://github.com/postfinance/discovery/commit/23816705))
+* **deps**: bump github.com/postfinance/flash from 0.3.0 to 0.4.0 (#92) ([c98c6fb5](https://github.com/postfinance/discovery/commit/c98c6fb5))
+* **deps**: bump github.com/postfinance/single from 0.0.1 to 0.0.2 (#59) ([0a969030](https://github.com/postfinance/discovery/commit/0a969030))
+* **deps**: bump github.com/prometheus/client_golang (#100) ([380c4e6b](https://github.com/postfinance/discovery/commit/380c4e6b))
+* **deps**: bump github.com/prometheus/client_golang (#56) ([581e9191](https://github.com/postfinance/discovery/commit/581e9191))
+* **deps**: bump github.com/prometheus/client_golang (#77) ([e494d773](https://github.com/postfinance/discovery/commit/e494d773))
+* **deps**: bump github.com/prometheus/client_golang (#97) ([9f6ff9dd](https://github.com/postfinance/discovery/commit/9f6ff9dd))
+* **deps**: bump github.com/stretchr/testify from 1.7.1 to 1.7.2 (#66) ([46238ff5](https://github.com/postfinance/discovery/commit/46238ff5))
+* **deps**: bump github.com/stretchr/testify from 1.7.2 to 1.8.0 (#71) ([cfd238dd](https://github.com/postfinance/discovery/commit/cfd238dd))
+* **deps**: bump github.com/stretchr/testify from 1.8.0 to 1.8.1 (#94) ([64f3330e](https://github.com/postfinance/discovery/commit/64f3330e))
+  > Bumps [github.com/stretchr/testify](https://github.com/stretchr/testify) from 1.8.0 to 1.8.1.
+  > - [Release notes](https://github.com/stretchr/testify/releases)
+  > - [Commits](https://github.com/stretchr/testify/compare/v1.8.0...v1.8.1)
+  > 
+  > ---
+  > updated-dependencies:
+  > - dependency-name: github.com/stretchr/testify
+  >   dependency-type: direct:production
+  >   update-type: version-update:semver-patch
+  > ...
+* **deps**: bump go.uber.org/zap from 1.21.0 to 1.22.0 (#79) ([49cddd63](https://github.com/postfinance/discovery/commit/49cddd63))
+* **deps**: bump golang.org/x/oauth2 from 0.1.0 to 0.2.0 (#98) ([70f29c82](https://github.com/postfinance/discovery/commit/70f29c82))
+* **deps**: bump google.golang.org/grpc from 1.46.0 to 1.46.2 (#58) ([c9f26ba8](https://github.com/postfinance/discovery/commit/c9f26ba8))
+* **deps**: bump google.golang.org/grpc from 1.46.2 to 1.47.0 (#63) ([d0b7f221](https://github.com/postfinance/discovery/commit/d0b7f221))
+* **deps**: bump google.golang.org/grpc from 1.47.0 to 1.48.0 (#73) ([136060c4](https://github.com/postfinance/discovery/commit/136060c4))
+  > Bumps [google.golang.org/grpc](https://github.com/grpc/grpc-go) from 1.47.0 to 1.48.0.
+  > - [Release notes](https://github.com/grpc/grpc-go/releases)
+  > - [Commits](https://github.com/grpc/grpc-go/compare/v1.47.0...v1.48.0)
+  > 
+  > ---
+  > updated-dependencies:
+  > - dependency-name: google.golang.org/grpc
+  >   dependency-type: direct:production
+  >   update-type: version-update:semver-minor
+  > ...
+* **deps**: bump google.golang.org/grpc from 1.48.0 to 1.50.1 (#90) ([8c774d3f](https://github.com/postfinance/discovery/commit/8c774d3f))
+* **deps**: bump google.golang.org/grpc from 1.50.1 to 1.51.0 (#103) ([31f5d6e3](https://github.com/postfinance/discovery/commit/31f5d6e3))
+* **deps**: bump k8s.io/apimachinery from 0.24.0 to 0.24.1 (#62) ([a88497d6](https://github.com/postfinance/discovery/commit/a88497d6))
+* **deps**: bump k8s.io/apimachinery from 0.24.1 to 0.24.2 (#67) ([c1c20ff9](https://github.com/postfinance/discovery/commit/c1c20ff9))
+* **deps**: bump k8s.io/apimachinery from 0.24.2 to 0.24.3 (#72) ([856a1abe](https://github.com/postfinance/discovery/commit/856a1abe))
+  > Bumps [k8s.io/apimachinery](https://github.com/kubernetes/apimachinery) from 0.24.2 to 0.24.3.
+  > - [Release notes](https://github.com/kubernetes/apimachinery/releases)
+  > - [Commits](https://github.com/kubernetes/apimachinery/compare/v0.24.2...v0.24.3)
+  > 
+  > ---
+  > updated-dependencies:
+  > - dependency-name: k8s.io/apimachinery
+  >   dependency-type: direct:production
+  >   update-type: version-update:semver-patch
+  > ...
+* **deps**: bump k8s.io/apimachinery from 0.24.3 to 0.25.3 (#91) ([34ab5b20](https://github.com/postfinance/discovery/commit/34ab5b20))
+* **deps**: bump k8s.io/apimachinery from 0.25.3 to 0.25.4 (#101) ([55e5249d](https://github.com/postfinance/discovery/commit/55e5249d))
+* **deps**: github.com/coreos/go-oidc/v3 3.4.0 -> 3.5.0 ([c78868c2](https://github.com/postfinance/discovery/commit/c78868c2))
+* **deps**: github.com/golang-jwt/jwt/v4 4.4.2 -> 4.4.3 ([0848956a](https://github.com/postfinance/discovery/commit/0848956a))
+* **deps**: github.com/grpc-ecosystem/grpc-gateway/v2 2.13.0 -> 2.15.0 ([f3a42303](https://github.com/postfinance/discovery/commit/f3a42303))
+* **deps**: github.com/postfinance/flash 0.4.0 -> 0.5.0 ([38a824d2](https://github.com/postfinance/discovery/commit/38a824d2))
+* **deps**: go.uber.org/zap 1.23.0 -> 1.24.0 ([bb6c1c61](https://github.com/postfinance/discovery/commit/bb6c1c61))
+* **deps**: golang.org/x/oauth2 0.2.0 -> 0.4.0 ([e83a9c34](https://github.com/postfinance/discovery/commit/e83a9c34))
+* **deps**: google.golang.org/genproto 0.0.0-20221027153422-115e99e71e1c -> 0.0.0-20230124163310-31e0e69b6fc2 ([5cb1f536](https://github.com/postfinance/discovery/commit/5cb1f536))
+* **deps**: google.golang.org/grpc 1.51.0 -> 1.52.1 ([d926718d](https://github.com/postfinance/discovery/commit/d926718d))
+* **deps**: k8s.io/apimachinery 0.25.4 -> 0.26.1 ([69692361](https://github.com/postfinance/discovery/commit/69692361))
+
+
+
 ## 0.8.2 (2022-05-09)
 
 
