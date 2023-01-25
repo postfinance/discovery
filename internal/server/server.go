@@ -34,15 +34,14 @@ import (
 
 const (
 	httpStopTimeout              = 10 * time.Second
+	httpReadTimeout              = 10 * time.Second
 	httpClientTimeout            = 10 * time.Second
 	cacheSyncInterval            = 1 * time.Minute
 	serviceCounterUpdateInterval = 15 * time.Second
 )
 
-var (
-	//go:embed swagger/*
-	static embed.FS
-)
+//go:embed swagger/*
+var static embed.FS
 
 // Server represents the discovery server.
 type Server struct {
@@ -205,7 +204,6 @@ func (s *Server) startGRPC(ctx context.Context) error {
 	reflection.Register(s.grpcServer)
 
 	listener, err := net.Listen("tcp", s.config.GRPCListenAddr)
-
 	if err != nil {
 		return err
 	}
@@ -245,8 +243,9 @@ func (s *Server) startHTTP(ctx context.Context) error {
 	mux.Handle("/", gwmux)
 
 	s.httpServer = &http.Server{
-		Addr:    s.config.HTTPListenAddr,
-		Handler: mux,
+		Addr:        s.config.HTTPListenAddr,
+		Handler:     mux,
+		ReadTimeout: httpClientTimeout,
 	}
 
 	if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {

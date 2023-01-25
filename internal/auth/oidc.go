@@ -66,7 +66,6 @@ func NewTLSTransportFromCertPool(pool *x509.CertPool) *http.Transport {
 		RootCAs:    pool,
 		MinVersion: tls.VersionTLS12,
 	}
-	tlsConfig.BuildNameToCertificate()
 
 	return &http.Transport{
 		TLSClientConfig: tlsConfig,

@@ -23,7 +23,7 @@ type namespaceList struct {
 	Headers bool   `short:"H" help:"Show headers."`
 }
 
-//nolint: dupl // it does not the same as serverList command
+//nolint:dupl // it does not the same as serverList command
 func (n namespaceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error {
 	cli, err := g.namespaceClient()
 	if err != nil {

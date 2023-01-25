@@ -1,3 +1,4 @@
+// The entry point for discovery server.
 package main
 
 import (

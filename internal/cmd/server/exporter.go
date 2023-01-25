@@ -25,7 +25,7 @@ type exporterCmd struct {
 	HTTPListen     string        `help:"HTTP listen adddress" default:"localhost:3003"`
 }
 
-//nolint: interfacer // kong does not work with interfaces
+//nolint:interfacer // kong does not work with interfaces
 func (e exporterCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	registry.MustRegister(collectors.NewGoCollector())

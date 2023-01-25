@@ -1,3 +1,4 @@
+// The entry point for discovery cli.
 package main
 
 import (

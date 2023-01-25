@@ -7,7 +7,8 @@ import (
 )
 
 // configure gprc logger
-//nolint: gocyclo // this is the only way to confgure the logger middleware
+//
+//nolint:gocyclo // this is the only way to confgure the logger middleware
 func customCodeToLevel(code codes.Code) zapcore.Level {
 	switch code {
 	case codes.OK:

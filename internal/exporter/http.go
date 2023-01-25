@@ -9,7 +9,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const httpStopTimeout = 10 * time.Second
+const (
+	httpStopTimeout   = 10 * time.Second
+	readHeaderTimeout = 10 * time.Second
+)
 
 func (e *Exporter) startHTTP() error {
 	e.log.Infow("starting http server")
@@ -28,8 +31,9 @@ func (e *Exporter) startHTTP() error {
 	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 
 	e.httpServer = &http.Server{
-		Addr:    e.config.HTTPListenAddr,
-		Handler: mux,
+		Addr:        e.config.HTTPListenAddr,
+		Handler:     mux,
+		ReadTimeout: readHeaderTimeout,
 	}
 
 	if err := e.httpServer.ListenAndServe(); err != http.ErrServerClosed {

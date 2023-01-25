@@ -130,7 +130,7 @@ func StreamAuthorizeInterceptor(rwRoles ...string) grpc.StreamServerInterceptor 
 	}
 }
 
-//nolint: gocyclo // maybe move rules to other function
+//nolint:gocyclo // maybe move rules to other function
 func authorizeUser(ctx context.Context, rwRoles ...string) error {
 	fullMethod := methodNameFromContext(ctx)
 	if strings.HasPrefix(fullMethod, "/grpc.reflection") {

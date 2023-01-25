@@ -37,7 +37,7 @@ type serverCmd struct {
 	CACert       string   `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile"`
 }
 
-//nolint: interfacer // kong does not work with interfaces
+//nolint:interfacer // kong does not work with interfaces
 func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, registry *prometheus.Registry) error {
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	registry.MustRegister(collectors.NewGoCollector())

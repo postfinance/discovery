@@ -113,7 +113,7 @@ func (e *Exporter) Start(ctx context.Context, server string) error {
 		select {
 		case se, ok := <-serverEvents:
 			if !ok {
-				defer e.log.Infow("exporter stopped")
+				e.log.Infow("exporter stopped")
 
 				return e.stopHTTP()
 			}
@@ -131,7 +131,7 @@ func (e *Exporter) Start(ctx context.Context, server string) error {
 
 			e.handleService(se)
 		case <-ctx.Done():
-			defer e.log.Infow("exporter stopped")
+			e.log.Infow("exporter stopped")
 
 			return e.stopHTTP()
 		case <-ticker.C:

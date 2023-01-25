@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"time"
@@ -113,7 +112,6 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 
 	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
-		defer cancel()
 
 		lbls := s.Labels
 
@@ -124,6 +122,9 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 			Labels:    lbls,
 			Selector:  s.Selector,
 		})
+
+		cancel()
+
 		if err != nil {
 			lastErr = err
 			l.Errorw("failed to register", "service", ep, "err", err)
@@ -170,12 +171,13 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 
 	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
-		defer cancel()
 
 		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
 			Namespace: s.Namespace,
 			Id:        ep,
 		})
+
+		cancel()
 
 		if err != nil {
 			lastErr = err
@@ -196,9 +198,11 @@ func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger
 	var lastErr error
 
 	ctx, cancel := g.ctx()
-	defer cancel()
 
 	r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{})
+
+	cancel()
+
 	if err != nil {
 		return err
 	}
@@ -226,12 +230,13 @@ func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger
 		l.Debugw("unregister service", svc.KeyVals()...)
 
 		ctx, cancel := g.ctx()
-		defer cancel()
 
 		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
 			Namespace: svc.Namespace,
 			Id:        svc.Endpoint.String(),
 		})
+
+		cancel()
 
 		if err != nil {
 			lastErr = err
@@ -336,7 +341,6 @@ func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 			Namespace:   s.Namespace,
 			Selector:    s.Selector,
 		})
-
 		if err != nil {
 			failed = append(failed, s)
 			msg := s.KeyVals()
@@ -348,7 +352,7 @@ func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 	}
 
 	if len(failed) > 0 {
-		file, err := ioutil.TempFile("", "discovery-import-failed*.yaml")
+		file, err := os.CreateTemp("", "discovery-import-failed*.yaml")
 		if err != nil {
 			return fmt.Errorf("failed to create tmp file: %w", err)
 		}

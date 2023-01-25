@@ -5,24 +5,21 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17
-          stable: true
+          go-version: 'stable'
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@master
         with:
-          version: v1.43.0
-          skip-go-installation: true
+          version: v1.50.1
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
-          go-version: 1.17
-          stable: true
+          go-version: 'stable'
       - name: Run Unit tests
         run: go test -race -covermode atomic -coverprofile=profile.cov ./...
       - name: Send coverage
@@ -40,14 +37,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.17
-          stable: true
+          go-version: 'stable'
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -69,14 +65,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.17
-          stable: true
+          go-version: 'stable'
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
