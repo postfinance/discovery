@@ -33,20 +33,8 @@ builds:
       env:
         - CGO_ENABLED=0
 nfpms:
-    - file_name_template: '{{ .ProjectName }}-{{ .Version }}.{{ .Arch }}'
+    - file_name_template: '{{ .ConventionalFileName }}'
       package_name: discovery
-      replacements:
-        "386": 32bit
-        amd64: x86_64
-        arm: ARM
-        arm64: ARM64
-        darwin: darwin
-        dragonfly: DragonFlyBSD
-        freebsd: FreeBSD
-        linux: Linux
-        netbsd: NetBSD
-        openbsd: OpenBSD
-        windows: Windows
       contents:
         - src: packaging/rpm/*.service
           dst: /usr/lib/systemd/system/
@@ -77,34 +65,10 @@ archives:
     builds:
       - discovery
       - discoveryd
-    replacements:
-      "386": 32bit
-      amd64: x86_64
-      arm: ARM
-      arm64: ARM64
-      darwin: darwin
-      dragonfly: DragonFlyBSD
-      freebsd: FreeBSD
-      linux: Linux
-      netbsd: NetBSD
-      openbsd: OpenBSD
-      windows: Windows
   - id: darwin
     builds:
       - discovery-darwin
     allow_different_binary_count: true
-    replacements:
-      "386": 32bit
-      amd64: x86_64
-      arm: ARM
-      arm64: ARM64
-      darwin: darwin
-      dragonfly: DragonFlyBSD
-      freebsd: FreeBSD
-      linux: Linux
-      netbsd: NetBSD
-      openbsd: OpenBSD
-      windows: Windows
 checksum:
     name_template: checksums.txt
 dockers:

@@ -20,11 +20,11 @@ PROTOC_GEN_GRPC_GATEWAY := 2.15.0
 
 ## build: build the binaries only
 build:
-	goreleaser build --rm-dist --snapshot
+	goreleaser build --clean --snapshot
 
 ## snapshot: create a snapshot release
 snapshot:
-	goreleaser release --snapshot --rm-dist --skip-sign
+	goreleaser release --snapshot --clean --skip-sign
 
 ## clean: cleanup
 clean:
