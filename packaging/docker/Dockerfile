@@ -1,4 +1,4 @@
-FROM linux-docker-local.repo.pnet.ch/pf/distroless/static:latest
+FROM gcr-docker-remote.repo.pnet.ch/distroless/static-debian11
 
 COPY discoveryd /usr/bin/discoveryd
 
