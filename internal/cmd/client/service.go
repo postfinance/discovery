@@ -12,10 +12,16 @@ import (
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
+	"github.com/sethvargo/go-retry"
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/labels"
+)
+
+const (
+	retryInterval = 1 * time.Second
+	maxRetries    = 3
 )
 
 type serviceCmd struct {
@@ -108,31 +114,43 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		return errors.New("name cannot be empty")
 	}
 
-	var lastErr error
+	var (
+		lastErr error
+		b       = retry.WithMaxRetries(maxRetries, retry.NewExponential(retryInterval))
+	)
 
 	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
 
 		lbls := s.Labels
+		id := ""
 
-		r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
-			Name:      s.Name,
-			Namespace: s.Namespace,
-			Endpoint:  ep,
-			Labels:    lbls,
-			Selector:  s.Selector,
-		})
+		if err := retry.Do(ctx, b, func(ctx context.Context) error {
+			r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
+				Name:      s.Name,
+				Namespace: s.Namespace,
+				Endpoint:  ep,
+				Labels:    lbls,
+				Selector:  s.Selector,
+			})
+			if err != nil {
+				l.Errorw("retry register", "service", ep, "err", err)
+				return retry.RetryableError(err)
+			}
 
-		cancel()
+			id = r.GetService().GetId()
 
-		if err != nil {
+			return nil
+		}); err != nil {
 			lastErr = err
 			l.Errorw("failed to register", "service", ep, "err", err)
 
 			continue
 		}
 
-		l.Infow("service registered", "id", r.GetService().GetId())
+		cancel()
+
+		l.Infow("service registered", "id", id)
 	}
 
 	if lastErr != nil {
@@ -159,7 +177,10 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		return fmt.Errorf("unresolved cannot be used in combination with endpoints")
 	}
 
-	var lastErr error
+	var (
+		lastErr error
+		b       = retry.WithMaxRetries(maxRetries, retry.NewExponential(retryInterval))
+	)
 
 	if s.UnResolved {
 		return s.unRegisterUnresolved(g, l, cli)
@@ -172,19 +193,25 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 	for _, ep := range s.Endpoints {
 		ctx, cancel := g.ctx()
 
-		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
-			Namespace: s.Namespace,
-			Id:        ep,
-		})
+		if err := retry.Do(ctx, b, func(ctx context.Context) error {
+			_, err := cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
+				Namespace: s.Namespace,
+				Id:        ep,
+			})
+			if err != nil {
+				l.Errorw("retry unregister", "service", ep, "err", err)
+				return retry.RetryableError(err)
+			}
 
-		cancel()
-
-		if err != nil {
+			return nil
+		}); err != nil {
 			lastErr = err
 			l.Errorw("failed to unregister", "service", ep, "namespace", s.Namespace, "err", err)
 
 			continue
 		}
+
+		cancel()
 	}
 
 	if lastErr != nil {

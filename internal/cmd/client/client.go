@@ -33,7 +33,7 @@ type CLI struct {
 // Globals are the global client flags.
 type Globals struct {
 	Address    string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
-	Timeout    time.Duration    `help:"The request timeout" default:"5s"`
+	Timeout    time.Duration    `help:"The request timeout" default:"15s"`
 	Debug      bool             `short:"d" help:"Log debug output."`
 	Insecure   bool             `help:"use insecure connection without tls." xor:"tls"`
 	ShowConfig king.ShowConfig  `help:"Show used config files"`

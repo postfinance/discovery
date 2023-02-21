@@ -18,6 +18,7 @@ require (
 	github.com/postfinance/store v0.2.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/satori/go.uuid v1.2.0
+	github.com/sethvargo/go-retry v0.2.4
 	github.com/stretchr/testify v1.8.1
 	github.com/zbindenren/king v0.3.1
 	github.com/zbindenren/sfmt v0.1.0
