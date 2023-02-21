@@ -25,7 +25,7 @@ import (
 // In both (successful) cases it extracts the user and adds it in the current context.
 //
 // Reflection and list requests are not authorized.
-func Func(verifier Verifier, th *TokenHandler, l *zap.SugaredLogger) func(ctx context.Context) (context.Context, error) {
+func Func(verifier Verifier, th *TokenHandler, l *zap.SugaredLogger, claimConfig ClaimConfig) func(ctx context.Context) (context.Context, error) {
 	return func(ctx context.Context) (context.Context, error) {
 		methodName := methodNameFromContext(ctx)
 		if strings.HasPrefix(methodName, "/grpc.reflection") {
@@ -72,9 +72,8 @@ func Func(verifier Verifier, th *TokenHandler, l *zap.SugaredLogger) func(ctx co
 		}
 
 		u := User{
-			Username: c.Username,
-			Roles:    c.Roles,
-			Email:    c.Email,
+			Username: claimConfig.Username(c),
+			Roles:    claimConfig.Roles(c),
 			Kind:     UserToken,
 		}
 
@@ -128,6 +127,67 @@ func StreamAuthorizeInterceptor(rwRoles ...string) grpc.StreamServerInterceptor 
 
 		return handler(srv, stream)
 	}
+}
+
+// ClaimConfig configures how to get username and roles from claims.
+type ClaimConfig struct {
+	username string
+	roles    string
+}
+
+// NewClaimConfig creates a new ClaimConfig.
+func NewClaimConfig(username, roles string) ClaimConfig {
+	return ClaimConfig{
+		username: username,
+		roles:    roles,
+	}
+}
+
+type claims map[string]interface{}
+
+// Roles gets the roles from claims map.
+func (c ClaimConfig) Roles(claims claims) []string {
+	r, ok := claims[c.roles]
+	if !ok {
+		return []string{}
+	}
+
+	rls, ok := r.([]interface{})
+	if ok {
+		roles := make([]string, 0, len(rls))
+
+		for _, r := range rls {
+			r, isString := r.(string)
+			if isString {
+				roles = append(roles, r)
+			}
+		}
+
+		return roles
+	}
+
+	roles, ok := r.([]string)
+	if !ok {
+		return []string{}
+	}
+
+	return roles
+}
+
+// Username gets the username from claims map.
+func (c ClaimConfig) Username(claims claims) string {
+	u, ok := claims[c.username]
+	if !ok {
+		return ""
+	}
+
+	username, ok := u.(string)
+
+	if !ok {
+		return ""
+	}
+
+	return username
 }
 
 //nolint:gocyclo // maybe move rules to other function

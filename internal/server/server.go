@@ -65,6 +65,7 @@ type Config struct {
 	OIDCRoles          []string
 	OIDCURL            string
 	Transport          http.RoundTripper
+	ClaimConfig        auth.ClaimConfig
 }
 
 // New initializes a new Server.
@@ -139,7 +140,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 			grpc_recovery.StreamServerInterceptor(opts...),
 			grpcMetrics.StreamServerInterceptor(),
 			auth.StreamMethodNameInterceptor(),
-			grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
+			grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
 			auth.StreamAuthorizeInterceptor(s.config.OIDCRoles...),
 			grpc_zap.StreamServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
 		)),
@@ -147,7 +148,7 @@ func (s *Server) startGRPC(ctx context.Context) error {
 			grpc_recovery.UnaryServerInterceptor(opts...),
 			grpcMetrics.UnaryServerInterceptor(),
 			auth.UnaryMethodNameInterceptor(),
-			grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"))),
+			grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
 			auth.UnaryAuthorizeInterceptor(s.config.OIDCRoles...),
 			grpc_zap.UnaryServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
 		)),

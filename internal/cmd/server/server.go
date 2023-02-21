@@ -26,15 +26,21 @@ type CLI struct {
 }
 
 type serverCmd struct {
-	GRPCListen   string   `short:"l" help:"GRPC gateway listen adddress" default:"localhost:3001"`
-	HTTPListen   string   `help:"HTTP listen adddress" default:"localhost:3002"`
-	Replicas     int      `help:"The number of service replicas." default:"1"`
-	TokenIssuer  string   `help:"The jwt token issuer name. If you change this, alle issued tokens are invalid." default:"discovery.postfinance.ch"`
-	TokenSecret  string   `help:"The secret key to issue jwt machine tokens. If you change this, alle issued tokens are invalid." required:"true"`
-	OIDCEndpoint string   `help:"OIDC endpoint URL." required:"true"`
-	OIDCClientID string   `help:"OIDC client ID." required:"true"`
-	OIDCRoles    []string `help:"The the roles that are allowed to change servers and namespaces and to issue machine tokens." required:"true"`
-	CACert       string   `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile"`
+	GRPCListen  string    `short:"l" help:"GRPC gateway listen adddress" default:"localhost:3001"`
+	HTTPListen  string    `help:"HTTP listen adddress" default:"localhost:3002"`
+	Replicas    int       `help:"The number of service replicas." default:"1"`
+	TokenIssuer string    `help:"The jwt token issuer name. If you change this, alle issued tokens are invalid." default:"discovery.postfinance.ch"`
+	TokenSecret string    `help:"The secret key to issue jwt machine tokens. If you change this, alle issued tokens are invalid." required:"true"`
+	OIDC        oidcFlags `embed:"true" prefix:"oidc-"`
+	CACert      string    `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile"`
+}
+
+type oidcFlags struct {
+	Endpoint      string   `help:"OIDC endpoint URL." required:"true"`
+	ClientID      string   `help:"OIDC client ID." required:"true"`
+	Roles         []string `help:"The the roles that are allowed to change servers and namespaces and to issue machine tokens." required:"true"`
+	UsernameClaim string   `name:"username-claim" help:"The URL to the oidc server." default:"username"`
+	RolesClaim    string   `name:"roles-claim" help:"The URL to the oidc server." default:"roles"`
 }
 
 //nolint:interfacer // kong does not work with interfaces
@@ -88,9 +94,10 @@ func (s serverCmd) config(registry prometheus.Registerer) (server.Config, error)
 		HTTPListenAddr:     s.HTTPListen,
 		TokenIssuer:        s.TokenIssuer,
 		TokenSecretKey:     s.TokenSecret,
-		OIDCClient:         s.OIDCClientID,
-		OIDCRoles:          s.OIDCRoles,
-		OIDCURL:            s.OIDCEndpoint,
+		OIDCClient:         s.OIDC.ClientID,
+		OIDCRoles:          s.OIDC.Roles,
+		OIDCURL:            s.OIDC.Endpoint,
+		ClaimConfig:        auth.NewClaimConfig(s.OIDC.UsernameClaim, s.OIDC.RolesClaim),
 		Transport:          transport,
 	}, nil
 }

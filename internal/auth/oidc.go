@@ -71,12 +71,3 @@ func NewTLSTransportFromCertPool(pool *x509.CertPool) *http.Transport {
 		TLSClientConfig: tlsConfig,
 	}
 }
-
-type claims struct {
-	Roles      []string `json:"roles"`
-	Name       string   `json:"name"`
-	GivenName  string   `json:"given_name"`
-	FamilyName string   `json:"family_name"`
-	Email      string   `json:"email"`
-	Username   string   `json:"username"`
-}

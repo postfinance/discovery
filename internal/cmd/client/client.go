@@ -32,16 +32,21 @@ type CLI struct {
 
 // Globals are the global client flags.
 type Globals struct {
-	Address      string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
-	Timeout      time.Duration    `help:"The request timeout" default:"5s"`
-	Debug        bool             `short:"d" help:"Log debug output."`
-	Insecure     bool             `help:"use insecure connection without tls." xor:"tls"`
-	ShowConfig   king.ShowConfig  `help:"Show used config files"`
-	Version      king.VersionFlag `help:"Show version information"`
-	TokenPath    string           `help:"Authentication token" default:"~/.config/discovery/.token"`
-	OIDCEndpoint string           `help:"OIDC endpoint URL." required:"true"`
-	OIDCClientID string           `help:"OIDC client ID." required:"true"`
-	CACert       string           `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile" xor:"tls"`
+	Address    string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
+	Timeout    time.Duration    `help:"The request timeout" default:"5s"`
+	Debug      bool             `short:"d" help:"Log debug output."`
+	Insecure   bool             `help:"use insecure connection without tls." xor:"tls"`
+	ShowConfig king.ShowConfig  `help:"Show used config files"`
+	Version    king.VersionFlag `help:"Show version information"`
+	TokenPath  string           `help:"Authentication token" default:"~/.config/discovery/.token"`
+	OIDC       oidc             `embed:"true" prefix:"oidc-"`
+	CACert     string           `help:"Path to a custom tls ca pem file. Certificates in this file are added to system cert pool." type:"existingfile" xor:"tls"`
+}
+
+type oidc struct {
+	Endpoint         string `help:"OIDC endpoint URL."`
+	ClientID         string `help:"OIDC client ID."`
+	ExternalLoginCmd string `help:"If not empty, this command is printed out for the login sub command. The command should create a id_token in token-path."`
 }
 
 func (g Globals) ctx() (context.Context, context.CancelFunc) {
@@ -131,7 +136,7 @@ type token struct {
 func (g Globals) loadToken() (*token, error) {
 	path := kong.ExpandPath(g.TokenPath)
 
-	d, err := os.ReadFile(path) //nolint: gosec // just reading token
+	d, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}
@@ -172,27 +177,31 @@ func (g Globals) getToken() (string, error) {
 	}
 
 	if err == nil && t.MachineToken == "" {
-		cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID)
-		if err != nil {
-			return "", err
-		}
-
-		tkn := &auth.Token{
-			RefreshToken: t.RefreshToken,
-			IDToken:      t.IDToken,
-		}
-
-		nt, err := cli.Refresh(tkn)
-		if err != nil {
-			return "", err
-		}
-
-		token = nt.IDToken
-
-		if nt.IDToken != t.IDToken {
-			if err := g.saveToken(nt); err != nil {
+		if t.RefreshToken != "" {
+			cli, err := auth.NewClient(g.OIDC.Endpoint, g.OIDC.ClientID)
+			if err != nil {
 				return "", err
 			}
+
+			tkn := &auth.Token{
+				RefreshToken: t.RefreshToken,
+				IDToken:      t.IDToken,
+			}
+
+			nt, err := cli.Refresh(tkn)
+			if err != nil {
+				return "", err
+			}
+
+			token = nt.IDToken
+
+			if nt.IDToken != t.IDToken {
+				if err := g.saveToken(nt); err != nil {
+					return "", err
+				}
+			}
+		} else {
+			token = t.IDToken
 		}
 	}
 

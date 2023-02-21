@@ -25,9 +25,13 @@ func TestFunc(t *testing.T) {
 	require.NoError(t, err)
 	nokVerifier := mockVerifier{ok: false}
 	okVerifier := mockVerifier{ok: true}
+	claimConfig := ClaimConfig{
+		username: "username",
+		roles:    "roles",
+	}
 
 	t.Run("bad machine token, nok oidc verifier", func(t *testing.T) {
-		f := Func(nokVerifier, tokenHandler, zap.New(nil).Sugar())
+		f := Func(nokVerifier, tokenHandler, zap.New(nil).Sugar(), claimConfig)
 		m := metadata.MD{}
 		m.Set("authorization", "bearer "+badToken)
 		ctx := metadata.NewIncomingContext(context.Background(), m)
@@ -35,7 +39,7 @@ func TestFunc(t *testing.T) {
 		assert.Error(t, err)
 	})
 	t.Run("valid machine token, nok oidc verifier", func(t *testing.T) {
-		f := Func(nokVerifier, tokenHandler, zap.New(nil).Sugar())
+		f := Func(nokVerifier, tokenHandler, zap.New(nil).Sugar(), claimConfig)
 		m := metadata.MD{}
 		m.Set("authorization", "bearer "+goodToken)
 		ctx := metadata.NewIncomingContext(context.Background(), m)
@@ -47,7 +51,7 @@ func TestFunc(t *testing.T) {
 		require.Equal(t, id, u.Username)
 	})
 	t.Run("bad machine token, ok oidc verifier", func(t *testing.T) {
-		f := Func(okVerifier, tokenHandler, zap.New(nil).Sugar())
+		f := Func(okVerifier, tokenHandler, zap.New(nil).Sugar(), claimConfig)
 		m := metadata.MD{}
 		m.Set("authorization", "bearer "+badToken)
 		ctx := metadata.NewIncomingContext(context.Background(), m)

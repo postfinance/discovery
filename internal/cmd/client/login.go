@@ -1,15 +1,23 @@
 package client
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/postfinance/discovery/internal/auth"
 )
 
-type loginCmd struct {
-}
+type loginCmd struct{}
 
 func (l loginCmd) Run(g *Globals) error {
+	if g.OIDC.ExternalLoginCmd != "" {
+		fmt.Fprintln(os.Stderr, "login with the following command:")
+		fmt.Fprintln(os.Stderr, "")
+		fmt.Fprint(os.Stderr, g.OIDC.ExternalLoginCmd+"\n")
+
+		return nil
+	}
+
 	user := os.Getenv("USER")
 	asker := auth.NewAsker(auth.WithPrompt("Enter username: "), auth.WithDfltUsername(user))
 
@@ -31,7 +39,7 @@ func (l loginCmd) Run(g *Globals) error {
 		opts = append(opts, auth.WithTransport(transport))
 	}
 
-	cli, err := auth.NewClient(g.OIDCEndpoint, g.OIDCClientID, opts...)
+	cli, err := auth.NewClient(g.OIDC.Endpoint, g.OIDC.ClientID, opts...)
 	if err != nil {
 		return err
 	}
