@@ -66,7 +66,9 @@ func NewClient(endPoint, clientID string, opts ...ClientOption) (*Client, error)
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if err := handleResponse(resp); err != nil {
 		return nil, err
@@ -215,7 +217,9 @@ func (c *Client) requestToken(data url.Values) (*Token, error) {
 		return nil, fmt.Errorf("requesting token: %w", err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if err := handleResponse(resp); err != nil {
 		return nil, err
