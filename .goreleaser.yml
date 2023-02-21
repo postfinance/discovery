@@ -73,7 +73,6 @@ checksum:
     name_template: checksums.txt
 dockers:
     - ids:
-        - discovery
         - discoveryd
       goos: linux
       goarch: amd64
@@ -83,8 +82,6 @@ dockers:
         - 'postfinance/discovery:{{ .Major }}.{{ .Minor }}'
         - 'postfinance/discovery:{{ .Major }}'
         - 'postfinance/discovery:latest'
-      extra_files:
-        - packaging/docker/docker-entrypoint.sh
       build_flag_templates:
         - --label=org.opencontainers.image.version={{ .Version }}
         - --label=org.opencontainers.image.revision={{ .ShortCommit }}
