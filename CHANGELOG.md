@@ -1,3 +1,23 @@
+## 0.9.0 (2023-02-21)
+
+
+### Build System
+
+* **deps**: bump github.com/golang-jwt/jwt/v4 from 4.4.3 to 4.5.0 (#115) ([d393d692](https://github.com/postfinance/discovery/commit/d393d692))
+* **deps**: bump golang.org/x/oauth2 from 0.4.0 to 0.5.0 (#112) ([2af7d82c](https://github.com/postfinance/discovery/commit/2af7d82c))
+* **deps**: bump golang.org/x/term from 0.4.0 to 0.5.0 (#114) ([bc546bac](https://github.com/postfinance/discovery/commit/bc546bac))
+* **deps**: bump google.golang.org/grpc from 1.52.1 to 1.52.3 (#111) ([1b943933](https://github.com/postfinance/discovery/commit/1b943933))
+* **deps**: bump google.golang.org/grpc from 1.52.3 to 1.53.0 (#113) ([b693f0d1](https://github.com/postfinance/discovery/commit/b693f0d1))
+
+
+### New Features
+
+* **common**: add possibility to use an external command to create the oidc id_token ([a3654f1c](https://github.com/postfinance/discovery/commit/a3654f1c))
+* **common**: building docker image from distroless ([8c729dd5](https://github.com/postfinance/discovery/commit/8c729dd5))
+* **common**: retry register and unregister service exponentially ([2dfd5651](https://github.com/postfinance/discovery/commit/2dfd5651))
+
+
+
 ## 0.8.3 (2023-01-25)
 
 
