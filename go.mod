@@ -16,7 +16,7 @@ require (
 	github.com/postfinance/profiler v0.1.1
 	github.com/postfinance/single v0.0.2
 	github.com/postfinance/store v0.2.0
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/stretchr/testify v1.8.1
