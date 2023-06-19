@@ -11,7 +11,7 @@ require (
 	github.com/google/renameio v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0
 	github.com/pkg/errors v0.9.1
 	github.com/postfinance/flash v0.5.1
 	github.com/postfinance/profiler v0.1.1
@@ -26,7 +26,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.9.0
 	golang.org/x/term v0.9.0
-	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4
+	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v3 v3.0.1
