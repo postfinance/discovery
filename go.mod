@@ -3,7 +3,6 @@ module github.com/postfinance/discovery
 go 1.16
 
 require (
-	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/alecthomas/kong v0.8.0
 	github.com/coreos/go-oidc/v3 v3.6.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -21,7 +20,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/stretchr/testify v1.8.4
-	github.com/zbindenren/king v0.3.1
+	github.com/zbindenren/king v0.3.2
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.9.0
