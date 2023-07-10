@@ -23,8 +23,8 @@ require (
 	github.com/zbindenren/king v0.3.2
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/oauth2 v0.9.0
-	golang.org/x/term v0.9.0
+	golang.org/x/oauth2 v0.10.0
+	golang.org/x/term v0.10.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/grpc v1.56.1
 	google.golang.org/protobuf v1.31.0
