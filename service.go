@@ -258,7 +258,7 @@ func ServiceByServer(r *regexp.Regexp) FilterFunc {
 // ServiceBySelector filters Services by Selector.
 func ServiceBySelector(selector labels.Selector) FilterFunc {
 	return func(s Service) bool {
-		return selector.Matches(s.Labels)
+		return selector.String() == s.Selector
 	}
 }
 

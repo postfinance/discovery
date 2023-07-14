@@ -33,6 +33,7 @@ func TestService(t *testing.T) {
 	t.Run("update", func(t *testing.T) {
 		s, err = discovery.NewService("test", "https://www.example.com/metrics")
 		require.NoError(t, err)
+		s.Selector = "zone=test"
 		s.Labels = discovery.Labels{"env": "test"}
 		s.ID = id
 		svc, err := r.Save(*s)
@@ -49,11 +50,11 @@ func TestService(t *testing.T) {
 	})
 
 	t.Run("list with selector", func(t *testing.T) {
-		svcs, err := r.List("", "env=prod")
+		svcs, err := r.List("", "zone=prod")
 		assert.NoError(t, err)
 		assert.Len(t, svcs, 0)
 
-		svcs, err = r.List("", "env=test")
+		svcs, err = r.List("", "zone=test")
 		assert.NoError(t, err)
 		assert.Len(t, svcs, 1)
 	})
