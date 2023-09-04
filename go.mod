@@ -24,7 +24,7 @@ require (
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.25.0
 	golang.org/x/oauth2 v0.11.0
-	golang.org/x/term v0.11.0
+	golang.org/x/term v0.12.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
 	google.golang.org/grpc v1.57.0
 	google.golang.org/protobuf v1.31.0
