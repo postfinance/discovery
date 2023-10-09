@@ -15,7 +15,7 @@ require (
 	github.com/postfinance/flash v0.5.1
 	github.com/postfinance/profiler v0.1.1
 	github.com/postfinance/single v0.0.2
-	github.com/postfinance/store v0.2.0
+	github.com/postfinance/store v0.3.0
 	github.com/prometheus/client_golang v1.17.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sethvargo/go-retry v0.2.4
