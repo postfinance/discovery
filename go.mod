@@ -15,7 +15,7 @@ require (
 	github.com/postfinance/flash v0.5.1
 	github.com/postfinance/profiler v0.1.1
 	github.com/postfinance/single v0.0.2
-	github.com/postfinance/store v0.2.0
+	github.com/postfinance/store v0.3.2
 	github.com/prometheus/client_golang v1.17.0
 	github.com/satori/go.uuid v1.2.0
 	github.com/sethvargo/go-retry v0.2.4
@@ -24,7 +24,7 @@ require (
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/oauth2 v0.12.0
-	golang.org/x/term v0.12.0
+	golang.org/x/term v0.13.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230822172742-b8732ec3820d
 	google.golang.org/grpc v1.58.2
 	google.golang.org/protobuf v1.31.0
