@@ -4,7 +4,6 @@ modules:
 lint:
   use:
     - DEFAULT
-    # - FIELD_NO_DESCRIPTOR
   except:
     - ENUM_FIRST_VALUE_ZERO
     - ENUM_VALUE_PREFIX
@@ -14,7 +13,6 @@ lint:
     - IMPORT_USED
     - PACKAGE_NO_IMPORT_CYCLE
     - PROTOVALIDATE
-    # - SYNTAX_SPECIFIED
   ignore:
     - proto/google
   enum_zero_value_suffix: _INVALID
