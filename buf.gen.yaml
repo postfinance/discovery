@@ -1,17 +1,8 @@
----
-version: v1beta1
+version: v2
 plugins:
-  - name: go
+  - local: ./bin/protoc-gen-go
     out: pkg/discoverypb
     opt: paths=source_relative
-    path: ./bin/protoc-gen-go
-  - name: go-grpc
+  - local: ./bin/protoc-gen-go-grpc
     out: pkg/discoverypb
     opt: paths=source_relative
-    path: ./bin/protoc-gen-go-grpc
-  - name: grpc-gateway
-    out: pkg/discoverypb
-    opt:
-      - paths=source_relative
-      - allow_repeated_fields_in_body=true
-    path: ./bin/protoc-gen-grpc-gateway

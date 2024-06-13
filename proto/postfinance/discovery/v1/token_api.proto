@@ -13,18 +13,10 @@ import "google/api/annotations.proto";
 // TokenAPI handels token requests.
 service TokenAPI {
   // Create creates a token.
-  rpc Create(CreateRequest) returns (CreateResponse) {
-    option (google.api.http) = {
-      post: "/v1/tokens"
-      body: "*"
-    };
-  }
+  rpc Create(CreateRequest) returns (CreateResponse);
+
   // Info gives token information.
-  rpc Info(InfoRequest) returns (InfoResponse) {
-    option (google.api.http) = {
-      get: "/v1/tokens/{token}"
-    };
-  }
+  rpc Info(InfoRequest) returns (InfoResponse);
 }
 
 message CreateRequest {

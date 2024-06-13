@@ -1,0 +1,75 @@
+version: '3'
+
+vars:
+  PROTOC_BUF: 1.32.0
+  PROTOC: 26.1
+
+env:
+  FLUFFY_MANAGER_NAMESPACE: default
+
+tasks:
+  default:
+    aliases:
+      - run
+    desc: run the controller
+    cmds:
+      # - kubectx kind-{{ .CLUSTER_ID_01 }}
+      - make run
+
+  buf-lint:
+    desc: Lints protobuffer files
+    deps:
+      - download-buf
+    cmds:
+      - bin/buf lint
+
+  buf-generate:
+    desc: Lints protobuffer files
+    deps:
+      - download-buf
+      - download-protoc
+      - download-tools
+    cmds:
+      - bin/buf generate --path proto/postfinance/
+    sources:
+      - proto/**/*.proto
+    generates:
+      - pkg/discoverypb/postfinance/discovery/v1/*.go
+
+  download-protoc:
+    cmds:
+      - mkdir -p bin
+      - curl -sLo /tmp/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v{{ .PROTOC}}/protoc-{{ .PROTOC }}-linux-x86_64.zip
+      - unzip -o /tmp/protoc.zip bin/protoc
+      - rm /tmp/protoc.zip
+    sources:
+      - Taskfile.yaml
+    generates:
+      - bin/protoc
+
+  download-buf:
+    cmds:
+      - mkdir -p bin
+      - curl -sLo - https://github.com/bufbuild/buf/releases/download/v{{ .PROTOC_BUF}}/buf-Linux-x86_64.tar.gz | tar -C bin --strip-components=2 -xvzf - buf/bin/buf
+      - chmod +x bin/buf
+    sources:
+      - Taskfile.yaml
+    generates:
+      - bin/buf
+
+  download-tools:
+   env:
+     GOPATH: /tmp/go
+   cmds:
+     - mkdir ${GOPATH}
+     - echo $GOPATH
+     - go install google.golang.org/protobuf/cmd/protoc-gen-go
+     - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+     - mkdir -p bin
+     - mv /tmp/go/bin/* bin/
+     - sudo rm -rf /tmp/go
+   sources:
+     - tools.go
+   generates:
+      - bin/protoc-gen-go
+      - bin/protoc-gen-go-grpc

@@ -3,6 +3,7 @@ module github.com/postfinance/discovery
 go 1.16
 
 require (
+	connectrpc.com/connect v1.16.2
 	github.com/alecthomas/kong v0.7.1
 	github.com/coreos/go-oidc/v3 v3.5.0
 	github.com/golang-jwt/jwt/v4 v4.5.0
@@ -24,10 +25,11 @@ require (
 	github.com/zbindenren/sfmt v0.1.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.5.0
-	golang.org/x/term v0.5.0
+	golang.org/x/term v0.18.0
 	google.golang.org/genproto v0.0.0-20230124163310-31e0e69b6fc2
 	google.golang.org/grpc v1.53.0
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.26.1
 )

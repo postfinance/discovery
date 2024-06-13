@@ -12,11 +12,10 @@ GO_VERSION := $(shell (go version | awk '{print $$3;}'))
 BINARIES := $(shell find ./dist ! -name '*goreleaserdocker*' -path '*_linux_*' -type f -executable)
 GORELEASER := 0.156.1
 GOLANGCI := 1.36.0
-PROTOC_BUF := 1.12.0
-PROTOC := 21.12
-PROTOC_GEN_GO := 1.28.1
-PROTOC_GEN_GRPC_GO := 1.2.0
-PROTOC_GEN_GRPC_GATEWAY := 2.15.0
+
+
+PROTOC_BUF := 1.31.0
+PROTOC := 26.1
 
 ## build: build the binaries only
 build:

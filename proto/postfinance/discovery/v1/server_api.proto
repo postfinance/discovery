@@ -13,24 +13,13 @@ import "google/api/annotations.proto";
 // ServerAPI is responsible for registering and unregistering servers.
 service ServerAPI {
   // RegisterServer registers a server.
-  rpc RegisterServer(RegisterServerRequest) returns (RegisterServerResponse) {
-    option (google.api.http) = {
-      post: "/v1/servers"
-      body: "*"
-    };
-  }
+  rpc RegisterServer(RegisterServerRequest) returns (RegisterServerResponse);
+
   // UnRegisterServer unregisters a server.
-  rpc UnregisterServer(UnregisterServerRequest) returns (UnregisterServerResponse) {
-    option (google.api.http) = {
-      delete: "/v1/servers/{name}"
-    };
-  }
+  rpc UnregisterServer(UnregisterServerRequest) returns (UnregisterServerResponse);
+
   // ListServer lists all servers.
-  rpc ListServer(ListServerRequest) returns (ListServerResponse) {
-    option (google.api.http) = {
-      get: "/v1/servers"
-    };
-  }
+  rpc ListServer(ListServerRequest) returns (ListServerResponse);
 }
 
 

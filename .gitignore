@@ -3,3 +3,5 @@ dist/
 .a*
 discovery*.yml
 bin/
+.task
+bin/
