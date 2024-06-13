@@ -21,6 +21,7 @@ import (
 	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
+	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/postfinance/store"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -57,8 +58,7 @@ type Server struct {
 type Config struct {
 	PrometheusRegistry prometheus.Registerer
 	NumReplicas        int
-	GRPCListenAddr     string
-	HTTPListenAddr     string
+	ListenAddr         string
 	TokenIssuer        string
 	TokenSecretKey     string
 	OIDCClient         string
@@ -196,10 +196,10 @@ func (s *Server) startGRPC(ctx context.Context) error {
 		tokenHandler: tokenHandler,
 	}
 
-	discoveryv1.RegisterServerAPIServer(s.grpcServer, a)
-	discoveryv1.RegisterServiceAPIServer(s.grpcServer, a)
-	discoveryv1.RegisterNamespaceAPIServer(s.grpcServer, a)
-	discoveryv1.RegisterTokenAPIServer(s.grpcServer, a)
+	// discoveryv1.RegisterServerAPIServer(s.grpcServer, a)
+	// discoveryv1.RegisterServiceAPIServer(s.grpcServer, a)
+	// discoveryv1.RegisterNamespaceAPIServer(s.grpcServer, a)
+	// discoveryv1.RegisterTokenAPIServer(s.grpcServer, a)
 
 	// grpc reflection support
 	reflection.Register(s.grpcServer)
@@ -221,6 +221,8 @@ func (s *Server) startHTTP(ctx context.Context) error {
 	}
 
 	gwmux := runtime.NewServeMux()
+
+	discoveryv1connect.NewNamespaceAPIHandler()
 
 	err = discoveryv1.RegisterServiceAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 	if err != nil {
