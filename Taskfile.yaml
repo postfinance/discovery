@@ -78,3 +78,4 @@ tasks:
   clean:
     cmds:
       - rm -rf bin
+      - sudo rm -rf /tmp/go

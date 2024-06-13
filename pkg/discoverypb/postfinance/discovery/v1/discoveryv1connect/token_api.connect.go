@@ -8,8 +8,8 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
+	v1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	http "net/http"
-	v1 "postfinance/discovery/v1"
 	strings "strings"
 )
 
