@@ -34,6 +34,7 @@ tasks:
     sources:
       - proto/**/*.proto
     generates:
+      - rm -rf pkg/discoverypb
       - pkg/discoverypb/postfinance/discovery/v1/*.go
 
   download-protoc:
@@ -64,7 +65,7 @@ tasks:
      - mkdir ${GOPATH}
      - echo $GOPATH
      - go install google.golang.org/protobuf/cmd/protoc-gen-go
-     - go install google.golang.org/grpc/cmd/protoc-gen-go-grpc
+     - go install connectrpc.com/connect/cmd/protoc-gen-connect-go
      - mkdir -p bin
      - mv /tmp/go/bin/* bin/
      - sudo rm -rf /tmp/go
@@ -73,3 +74,7 @@ tasks:
    generates:
       - bin/protoc-gen-go
       - bin/protoc-gen-go-grpc
+
+  clean:
+    cmds:
+      - rm -rf bin

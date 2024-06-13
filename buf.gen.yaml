@@ -3,6 +3,6 @@ plugins:
   - local: ./bin/protoc-gen-go
     out: pkg/discoverypb
     opt: paths=source_relative
-  - local: ./bin/protoc-gen-go-grpc
+  - local: ./bin/protoc-gen-connect-go
     out: pkg/discoverypb
     opt: paths=source_relative
