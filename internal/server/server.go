@@ -82,9 +82,10 @@ func (s *Server) Run(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
-		s.l.Info("starting http server")
 
-		errC <- s.startRene(ctx)
+		if err := s.startHTTP(ctx); err != nil {
+			errC <- err
+		}
 	}()
 
 	select {
@@ -121,7 +122,7 @@ func (s *Server) createMux(api *API) *http.ServeMux {
 	return mux
 }
 
-func (s *Server) startRene(ctx context.Context) error {
+func (s *Server) startHTTP(ctx context.Context) error {
 	s.l.Infow("starting http server")
 
 	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
