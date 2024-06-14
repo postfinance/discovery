@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
@@ -30,16 +31,16 @@ func (t tokenCreate) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	r, err := cli.Create(ctx, &discoveryv1.CreateRequest{
+	r, err := cli.Create(ctx, connect.NewRequest(&discoveryv1.CreateRequest{
 		Expires:    t.Expiry.String(),
 		Id:         t.ID,
 		Namespaces: t.Namespaces,
-	})
+	}))
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(r.Token)
+	fmt.Println(r.Msg.GetToken())
 
 	return nil
 }
@@ -57,14 +58,14 @@ func (t tokenInfo) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error 
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	r, err := cli.Info(ctx, &discoveryv1.InfoRequest{
+	r, err := cli.Info(ctx, connect.NewRequest(&discoveryv1.InfoRequest{
 		Token: t.Token,
-	})
+	}))
 	if err != nil {
 		return err
 	}
 
-	i := r.GetTokeninfo()
+	i := r.Msg.GetTokeninfo()
 	expiry := convert.TimeFromPB(i.GetExpiresAt())
 	expiryStr := expiry.Format(time.RFC3339)
 

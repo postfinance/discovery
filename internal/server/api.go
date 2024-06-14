@@ -49,7 +49,7 @@ func (a *API) Create(_ context.Context, req *connect.Request[discoveryv1.CreateR
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create token: %w", err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.CreateResponse](&discoveryv1.CreateResponse{
+	resp := connect.NewResponse(&discoveryv1.CreateResponse{
 		Token: token,
 	})
 
@@ -63,7 +63,7 @@ func (a *API) Info(_ context.Context, in *connect.Request[discoveryv1.InfoReques
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("token %s is not valid: %w", in.Msg.GetToken(), err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.InfoResponse](&discoveryv1.InfoResponse{
+	resp := connect.NewResponse(&discoveryv1.InfoResponse{
 		Tokeninfo: &discoveryv1.TokenInfo{
 			Id:         u.Username,
 			Namespaces: u.Namespaces,
@@ -81,7 +81,7 @@ func (a *API) ListServer(_ context.Context, req *connect.Request[discoveryv1.Lis
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not list server: %w", err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.ListServerResponse](&discoveryv1.ListServerResponse{
+	resp := connect.NewResponse(&discoveryv1.ListServerResponse{
 		Servers: convert.ServersToPB(s),
 	})
 
@@ -99,7 +99,7 @@ func (a *API) RegisterServer(_ context.Context, req *connect.Request[discoveryv1
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not register server %s in store: %w", req.Msg.GetName(), err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.RegisterServerResponse](&discoveryv1.RegisterServerResponse{
+	resp := connect.NewResponse(&discoveryv1.RegisterServerResponse{
 		Server: convert.ServerToPB(s),
 	})
 
@@ -117,7 +117,7 @@ func (a *API) UnregisterServer(_ context.Context, req *connect.Request[discovery
 		return nil, connect.NewError(c, fmt.Errorf("could not unregister server %s in store: %w", req.Msg.GetName(), err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.UnregisterServerResponse](&discoveryv1.UnregisterServerResponse{})
+	resp := connect.NewResponse(&discoveryv1.UnregisterServerResponse{})
 
 	return resp, nil
 }
@@ -129,7 +129,7 @@ func (a *API) ListNamespace(context.Context, *connect.Request[discoveryv1.ListNa
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not list namespaces: %w", err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.ListNamespaceResponse](&discoveryv1.ListNamespaceResponse{
+	resp := connect.NewResponse(&discoveryv1.ListNamespaceResponse{
 		Namespaces: convert.NamespacesToPB(namespaces),
 	})
 
@@ -151,7 +151,7 @@ func (a *API) RegisterNamespace(_ context.Context, req *connect.Request[discover
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not register namespace %s in store: %w", req.Msg.GetName(), err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.RegisterNamespaceResponse](&discoveryv1.RegisterNamespaceResponse{
+	resp := connect.NewResponse(&discoveryv1.RegisterNamespaceResponse{
 		Namespace: convert.NamespaceToPB(n),
 	})
 
@@ -169,7 +169,7 @@ func (a *API) UnregisterNamespace(_ context.Context, req *connect.Request[discov
 		return nil, connect.NewError(c, fmt.Errorf("could not unregister namespace %s in store: %w", req.Msg.GetName(), err))
 	}
 
-	resp := connect.NewResponse[discoveryv1.UnregisterNamespaceResponse](&discoveryv1.UnregisterNamespaceResponse{})
+	resp := connect.NewResponse(&discoveryv1.UnregisterNamespaceResponse{})
 
 	return resp, nil
 }

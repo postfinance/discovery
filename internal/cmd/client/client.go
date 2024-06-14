@@ -3,15 +3,18 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"crypto/x509"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/alecthomas/kong"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/pkg/errors"
 	"github.com/postfinance/discovery/internal/auth"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
+	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/zbindenren/king"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -32,7 +35,7 @@ type CLI struct {
 
 // Globals are the global client flags.
 type Globals struct {
-	Address    string           `short:"a" help:"The address of the discovery grpc endpoint." default:"localhost:3001"`
+	Address    string           `short:"a" help:"The address of the discovery grpc endpoint." default:"http://localhost:3001"`
 	Timeout    time.Duration    `help:"The request timeout" default:"15s"`
 	Debug      bool             `short:"d" help:"Log debug output."`
 	Insecure   bool             `help:"use insecure connection without tls." xor:"tls"`
@@ -83,40 +86,40 @@ func (g Globals) conn() (*grpc.ClientConn, error) {
 	return grpc.Dial(g.Address, dialOpts...)
 }
 
-func (g Globals) serverClient() (discoveryv1.ServerAPIClient, error) {
-	conn, err := g.conn()
+func (g Globals) serverClient() (discoveryv1connect.ServerAPIClient, error) {
+	c, err := g.httpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return discoveryv1.NewServerAPIClient(conn), nil
+	return discoveryv1connect.NewServerAPIClient(c, g.Address), nil
 }
 
-func (g Globals) serviceClient() (discoveryv1.ServiceAPIClient, error) {
-	conn, err := g.conn()
+func (g Globals) serviceClient() (discoveryv1connect.ServiceAPIClient, error) {
+	c, err := g.httpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return discoveryv1.NewServiceAPIClient(conn), nil
+	return discoveryv1connect.NewServiceAPIClient(c, g.Address), nil
 }
 
-func (g Globals) namespaceClient() (discoveryv1.NamespaceAPIClient, error) {
-	conn, err := g.conn()
+func (g Globals) namespaceClient() (discoveryv1connect.NamespaceAPIClient, error) {
+	c, err := g.httpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return discoveryv1.NewNamespaceAPIClient(conn), nil
+	return discoveryv1connect.NewNamespaceAPIClient(c, g.Address), nil
 }
 
-func (g Globals) tokenClient() (discoveryv1.TokenAPIClient, error) {
-	conn, err := g.conn()
+func (g Globals) tokenClient() (discoveryv1connect.TokenAPIClient, error) {
+	c, err := g.httpClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return discoveryv1.NewTokenAPIClient(conn), nil
+	return discoveryv1connect.NewTokenAPIClient(c, g.Address), nil
 }
 
 func buildClientInterceptor(token string) func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, grpc.UnaryInvoker, ...grpc.CallOption) error {
@@ -210,4 +213,28 @@ func (g Globals) getToken() (string, error) {
 	}
 
 	return token, nil
+}
+
+func (g Globals) httpClient() (*http.Client, error) {
+	clnt := cleanhttp.DefaultClient()
+	clnt.Timeout = g.Timeout
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: g.Insecure, //nolint:gosec // configurable
+	}
+
+	if !g.Insecure {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, err
+		}
+
+		tlsConfig.RootCAs = pool
+	}
+
+	clnt.Transport = &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
+
+	return clnt, nil
 }

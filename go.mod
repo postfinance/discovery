@@ -10,8 +10,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/renameio v1.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0
+	github.com/hashicorp/go-cleanhttp v0.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/postfinance/flash v0.5.0
 	github.com/postfinance/profiler v0.1.1

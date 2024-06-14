@@ -26,8 +26,7 @@ type CLI struct {
 }
 
 type serverCmd struct {
-	GRPCListen  string    `short:"l" help:"GRPC gateway listen adddress" default:"localhost:3001"`
-	HTTPListen  string    `help:"HTTP listen adddress" default:"localhost:3002"`
+	ListenAddr  string    `help:"HTTP listen adddress" default:":3001"`
 	Replicas    int       `help:"The number of service replicas." default:"1"`
 	TokenIssuer string    `help:"The jwt token issuer name. If you change this, alle issued tokens are invalid." default:"discovery.postfinance.ch"`
 	TokenSecret string    `help:"The secret key to issue jwt machine tokens. If you change this, alle issued tokens are invalid." required:"true"`
@@ -90,8 +89,7 @@ func (s serverCmd) config(registry prometheus.Registerer) (server.Config, error)
 	return server.Config{
 		PrometheusRegistry: registry,
 		NumReplicas:        s.Replicas,
-		GRPCListenAddr:     s.GRPCListen,
-		HTTPListenAddr:     s.HTTPListen,
+		ListenAddr:         s.ListenAddr,
 		TokenIssuer:        s.TokenIssuer,
 		TokenSecretKey:     s.TokenSecret,
 		OIDCClient:         s.OIDC.ClientID,

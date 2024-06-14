@@ -8,10 +8,12 @@ import (
 	"regexp"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
+	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/sethvargo/go-retry"
 	"github.com/zbindenren/sfmt"
 	"go.uber.org/zap"
@@ -49,14 +51,14 @@ func (s serviceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{
+	r, err := cli.ListService(ctx, connect.NewRequest(&discoveryv1.ListServiceRequest{
 		Namespace: s.Namespace,
-	})
+	}))
 	if err != nil {
 		return err
 	}
 
-	services := convert.ServicesFromPB(r.GetServices())
+	services := convert.ServicesFromPB(r.Msg.GetServices())
 
 	filters, err := s.serviceFilter.filters()
 	if err != nil {
@@ -126,19 +128,19 @@ func (s serviceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) 
 		id := ""
 
 		if err := retry.Do(ctx, b, func(ctx context.Context) error {
-			r, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
+			r, err := cli.RegisterService(ctx, connect.NewRequest(&discoveryv1.RegisterServiceRequest{
 				Name:      s.Name,
 				Namespace: s.Namespace,
 				Endpoint:  ep,
 				Labels:    lbls,
 				Selector:  s.Selector,
-			})
+			}))
 			if err != nil {
 				l.Errorw("retry register", "service", ep, "err", err)
 				return retry.RetryableError(err)
 			}
 
-			id = r.GetService().GetId()
+			id = r.Msg.GetService().GetId()
 
 			return nil
 		}); err != nil {
@@ -194,10 +196,10 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		ctx, cancel := g.ctx()
 
 		if err := retry.Do(ctx, b, func(ctx context.Context) error {
-			_, err := cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
+			_, err := cli.UnRegisterService(ctx, connect.NewRequest(&discoveryv1.UnRegisterServiceRequest{
 				Namespace: s.Namespace,
 				Id:        ep,
-			})
+			}))
 			if err != nil {
 				l.Errorw("retry unregister", "service", ep, "err", err)
 				return retry.RetryableError(err)
@@ -221,12 +223,12 @@ func (s serviceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 	return nil
 }
 
-func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger, cli discoveryv1.ServiceAPIClient) error {
+func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger, cli discoveryv1connect.ServiceAPIClient) error {
 	var lastErr error
 
 	ctx, cancel := g.ctx()
 
-	r, err := cli.ListService(ctx, &discoveryv1.ListServiceRequest{})
+	r, err := cli.ListService(ctx, connect.NewRequest(&discoveryv1.ListServiceRequest{}))
 
 	cancel()
 
@@ -234,7 +236,7 @@ func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger
 		return err
 	}
 
-	services := convert.ServicesFromPB(r.GetServices())
+	services := convert.ServicesFromPB(r.Msg.GetServices())
 
 	unresolved, err := services.UnResolved()
 	if err != nil {
@@ -258,10 +260,10 @@ func (s serviceUnRegister) unRegisterUnresolved(g *Globals, l *zap.SugaredLogger
 
 		ctx, cancel := g.ctx()
 
-		_, err = cli.UnRegisterService(ctx, &discoveryv1.UnRegisterServiceRequest{
+		_, err = cli.UnRegisterService(ctx, connect.NewRequest(&discoveryv1.UnRegisterServiceRequest{
 			Namespace: svc.Namespace,
 			Id:        svc.Endpoint.String(),
-		})
+		}))
 
 		cancel()
 
@@ -360,14 +362,14 @@ func (s serviceImport) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 		s := services[j]
 		l.Debugw("import serivce", s.KeyVals()...)
 
-		_, err := cli.RegisterService(ctx, &discoveryv1.RegisterServiceRequest{
+		_, err := cli.RegisterService(ctx, connect.NewRequest(&discoveryv1.RegisterServiceRequest{
 			Name:        s.Name,
 			Endpoint:    s.Endpoint.String(),
 			Description: s.Description,
 			Labels:      s.Labels,
 			Namespace:   s.Namespace,
 			Selector:    s.Selector,
-		})
+		}))
 		if err != nil {
 			failed = append(failed, s)
 			msg := s.KeyVals()

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/server/convert"
@@ -33,12 +34,12 @@ func (n namespaceList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) er
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	r, err := cli.ListNamespace(ctx, &discoveryv1.ListNamespaceRequest{})
+	r, err := cli.ListNamespace(ctx, connect.NewRequest(&discoveryv1.ListNamespaceRequest{}))
 	if err != nil {
 		return err
 	}
 
-	namespaces := convert.NamespacesFromPB(r.GetNamespaces())
+	namespaces := convert.NamespacesFromPB(r.Msg.GetNamespaces())
 
 	sw := sfmt.SliceWriter{
 		Writer:    os.Stdout,
@@ -78,10 +79,11 @@ func (n namespaceRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context
 		return errors.New("unsupported export configuration")
 	}
 
-	_, err = cli.RegisterNamespace(ctx, &discoveryv1.RegisterNamespaceRequest{
-		Name:   n.Name,
-		Export: int32(e),
-	})
+	_, err = cli.RegisterNamespace(ctx, connect.NewRequest(
+		&discoveryv1.RegisterNamespaceRequest{
+			Name:   n.Name,
+			Export: int32(e),
+		}))
 
 	return err
 }
@@ -99,9 +101,9 @@ func (n namespaceUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Conte
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	_, err = cli.UnregisterNamespace(ctx, &discoveryv1.UnregisterNamespaceRequest{
+	_, err = cli.UnregisterNamespace(ctx, connect.NewRequest(&discoveryv1.UnregisterNamespaceRequest{
 		Name: n.Name,
-	})
+	}))
 
 	return err
 }

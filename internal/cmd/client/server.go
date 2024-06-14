@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
 	"github.com/postfinance/discovery/internal/server/convert"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
@@ -35,12 +36,12 @@ func (s serverList) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) error
 	ctx, cancel := g.ctx()
 	defer cancel()
 
-	r, err := cli.ListServer(ctx, &discoveryv1.ListServerRequest{})
+	r, err := cli.ListServer(ctx, connect.NewRequest(&discoveryv1.ListServerRequest{}))
 	if err != nil {
 		return err
 	}
 
-	servers := convert.ServersFromPB(r.GetServers())
+	servers := convert.ServersFromPB(r.Msg.GetServers())
 
 	sw := sfmt.SliceWriter{
 		Writer:    os.Stdout,
@@ -69,10 +70,10 @@ func (s serverRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) e
 	ctx, cancel := context.WithTimeout(context.Background(), registerTimout)
 	defer cancel()
 
-	_, err = cli.RegisterServer(ctx, &discoveryv1.RegisterServerRequest{
+	_, err = cli.RegisterServer(ctx, connect.NewRequest(&discoveryv1.RegisterServerRequest{
 		Name:   s.Name,
 		Labels: s.Labels,
-	})
+	}))
 
 	return err
 }
@@ -92,9 +93,9 @@ func (s serverUnRegister) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context)
 	ctx, cancel := context.WithTimeout(context.Background(), registerTimout)
 	defer cancel()
 
-	_, err = cli.UnregisterServer(ctx, &discoveryv1.UnregisterServerRequest{
+	_, err = cli.UnregisterServer(ctx, connect.NewRequest(&discoveryv1.UnregisterServerRequest{
 		Name: s.Name,
-	})
+	}))
 
 	return err
 }

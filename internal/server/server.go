@@ -4,33 +4,20 @@ package server
 import (
 	"context"
 	"embed"
-	"fmt"
-	"net"
+	"log/slog"
 	"net/http"
-	"runtime/debug"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/postfinance/discovery"
 	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
-	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/postfinance/store"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -46,11 +33,11 @@ var static embed.FS
 
 // Server represents the discovery server.
 type Server struct {
+	ready      atomic.Bool
 	wg         *sync.WaitGroup
 	backend    store.Backend
 	l          *zap.SugaredLogger
 	config     Config
-	grpcServer *grpc.Server
 	httpServer *http.Server
 }
 
@@ -75,88 +62,74 @@ func New(backend store.Backend, l *zap.SugaredLogger, cfg Config) (*Server, erro
 		l:       l,
 		wg:      &sync.WaitGroup{},
 		config:  cfg,
+		ready:   atomic.Bool{},
 	}
+
+	s.ready.Store(false)
 
 	return &s, nil
 }
 
 // Run starts the server and runs until context is canceled.
 func (s *Server) Run(ctx context.Context) error {
-	s.wg.Add(2)
+	var (
+		wg   = new(sync.WaitGroup)
+		errC = make(chan error)
+		err  error
+	)
 
-	errChan := make(chan error)
-
-	go func() {
-		if err := s.startGRPC(ctx); err != nil {
-			errChan <- err
-		}
-	}()
+	wg.Add(1)
 
 	go func() {
-		if err := s.startHTTP(ctx); err != nil {
-			errChan <- err
-		}
+		defer wg.Done()
+		s.l.Info("starting http server")
+
+		errC <- s.startRene(ctx)
 	}()
 
-	for {
-		select {
-		case err := <-errChan:
-			return err
-		case <-ctx.Done():
-			err := s.stop()
-			s.wg.Wait()
-
-			return err
-		}
+	select {
+	case <-ctx.Done():
+	case e := <-errC:
+		err = e
 	}
+
+	s.stop()
+	wg.Wait()
+
+	return err
 }
 
-func (s *Server) startGRPC(ctx context.Context) error {
-	s.l.Infow("starting grpc server")
+func (s *Server) createMux(api *API) *http.ServeMux {
+	mux := http.NewServeMux()
 
-	grpcMetrics := grpc_prometheus.NewServerMetrics()
-	grpcMetrics.EnableHandlingTimeHistogram()
+	r, ok := s.config.PrometheusRegistry.(prometheus.Gatherer)
+	if !ok {
+		panic("interface is not prometheus.Registry")
+	}
 
-	panicHandler := func(p interface{}) (err error) {
-		s.l.Errorw("panic ocured", "trace", string(debug.Stack()))
-		return status.Errorf(codes.Unknown, "%v", p)
-	}
-	opts := []grpc_recovery.Option{
-		grpc_recovery.WithRecoveryHandler(panicHandler),
-	}
+	mux.HandleFunc("/ready", s.readyHandler())
+	mux.Handle("/swagger/", http.FileServer(http.FS(static)))
+	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+
+	httpPath, handler := discoveryv1connect.NewServerAPIHandler(api)
+	mux.Handle(httpPath, handler)
+	httpPath, handler = discoveryv1connect.NewNamespaceAPIHandler(api)
+	mux.Handle(httpPath, handler)
+	httpPath, handler = discoveryv1connect.NewTokenAPIHandler(api)
+	mux.Handle(httpPath, handler)
+
+	return mux
+}
+
+func (s *Server) startRene(ctx context.Context) error {
+	s.l.Infow("starting http server")
 
 	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
 
-	verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
-	if err != nil {
-		return err
-	}
-
-	// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
-	// grpc_zap.ReplaceGrpcLoggerV2(s.l.Desugar())
-
-	s.grpcServer = grpc.NewServer(
-		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-			grpc_recovery.StreamServerInterceptor(opts...),
-			grpcMetrics.StreamServerInterceptor(),
-			auth.StreamMethodNameInterceptor(),
-			grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
-			auth.StreamAuthorizeInterceptor(s.config.OIDCRoles...),
-			grpc_zap.StreamServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
-		)),
-		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-			grpc_recovery.UnaryServerInterceptor(opts...),
-			grpcMetrics.UnaryServerInterceptor(),
-			auth.UnaryMethodNameInterceptor(),
-			grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
-			auth.UnaryAuthorizeInterceptor(s.config.OIDCRoles...),
-			grpc_zap.UnaryServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
-		)),
-	)
-
-	if err := s.config.PrometheusRegistry.Register(grpcMetrics); err != nil {
-		return err
-	}
+	// verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if err := s.config.PrometheusRegistry.Register(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
@@ -196,60 +169,15 @@ func (s *Server) startGRPC(ctx context.Context) error {
 		tokenHandler: tokenHandler,
 	}
 
-	// discoveryv1.RegisterServerAPIServer(s.grpcServer, a)
-	// discoveryv1.RegisterServiceAPIServer(s.grpcServer, a)
-	// discoveryv1.RegisterNamespaceAPIServer(s.grpcServer, a)
-	// discoveryv1.RegisterTokenAPIServer(s.grpcServer, a)
-
-	// grpc reflection support
-	reflection.Register(s.grpcServer)
-
-	listener, err := net.Listen("tcp", s.config.GRPCListenAddr)
-	if err != nil {
-		return err
-	}
-
-	return s.grpcServer.Serve(listener)
-}
-
-func (s *Server) startHTTP(ctx context.Context) error {
-	s.l.Infow("starting http server")
-
-	ep, err := getGRPCEndpointFromListenAddr(s.config.GRPCListenAddr)
-	if err != nil {
-		return err
-	}
-
-	gwmux := runtime.NewServeMux()
-
-	discoveryv1connect.NewNamespaceAPIHandler()
-
-	err = discoveryv1.RegisterServiceAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		return err
-	}
-
-	err = discoveryv1.RegisterServerAPIHandlerFromEndpoint(ctx, gwmux, ep, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		return err
-	}
-
-	mux := http.NewServeMux()
-
-	r, ok := s.config.PrometheusRegistry.(prometheus.Gatherer)
-	if !ok {
-		panic("interface is not prometheus.Registry")
-	}
-
-	mux.Handle("/swagger/", http.FileServer(http.FS(static)))
-	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
-	mux.Handle("/", gwmux)
+	mux := s.createMux(a)
 
 	s.httpServer = &http.Server{
-		Addr:        s.config.HTTPListenAddr,
+		Addr:        s.config.ListenAddr,
 		Handler:     mux,
 		ReadTimeout: httpClientTimeout,
 	}
+
+	s.ready.Store(true)
 
 	if err := s.httpServer.ListenAndServe(); err != http.ErrServerClosed {
 		return err
@@ -258,64 +186,128 @@ func (s *Server) startHTTP(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) stop() error {
-	errChan := make(chan error)
+//	func (s *Server) startGRPC(ctx context.Context) error {
+//		s.l.Infow("starting grpc server")
+//
+//		grpcMetrics := grpc_prometheus.NewServerMetrics()
+//		grpcMetrics.EnableHandlingTimeHistogram()
+//
+//		panicHandler := func(p interface{}) (err error) {
+//			s.l.Errorw("panic ocured", "trace", string(debug.Stack()))
+//			return status.Errorf(codes.Unknown, "%v", p)
+//		}
+//		opts := []grpc_recovery.Option{
+//			grpc_recovery.WithRecoveryHandler(panicHandler),
+//		}
+//
+//		tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
+//
+//		verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
+//		if err != nil {
+//			return err
+//		}
+//
+//		// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
+//		// grpc_zap.ReplaceGrpcLoggerV2(s.l.Desugar())
+//
+//		s.grpcServer = grpc.NewServer(
+//			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+//				grpc_recovery.StreamServerInterceptor(opts...),
+//				grpcMetrics.StreamServerInterceptor(),
+//				auth.StreamMethodNameInterceptor(),
+//				grpc_auth.StreamServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
+//				auth.StreamAuthorizeInterceptor(s.config.OIDCRoles...),
+//				grpc_zap.StreamServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
+//			)),
+//			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+//				grpc_recovery.UnaryServerInterceptor(opts...),
+//				grpcMetrics.UnaryServerInterceptor(),
+//				auth.UnaryMethodNameInterceptor(),
+//				grpc_auth.UnaryServerInterceptor(auth.Func(verifier, tokenHandler, s.l.Named("auth"), s.config.ClaimConfig)),
+//				auth.UnaryAuthorizeInterceptor(s.config.OIDCRoles...),
+//				grpc_zap.UnaryServerInterceptor(s.l.Desugar(), grpc_zap.WithLevels(customCodeToLevel)),
+//			)),
+//		)
+//
+//		if err := s.config.PrometheusRegistry.Register(grpcMetrics); err != nil {
+//			return err
+//		}
+//
+//		if err := s.config.PrometheusRegistry.Register(prometheus.NewGaugeFunc(
+//			prometheus.GaugeOpts{
+//				Name: "discovery_replication_factor",
+//				Help: "A metric with with constant value showing the configured replication factor.",
+//			},
+//			func() float64 { return float64(s.config.NumReplicas) },
+//		)); err != nil {
+//			return err
+//		}
+//
+//		r, err := registry.New(s.backend, s.config.PrometheusRegistry, s.l, s.config.NumReplicas)
+//		if err != nil {
+//			return err
+//		}
+//
+//		go r.StartCacheUpdater(ctx, cacheSyncInterval)
+//		go r.StartServiceCounterUpdater(ctx, serviceCounterUpdateInterval)
+//
+//		ns, err := r.ListNamespaces()
+//		if err != nil {
+//			return err
+//		}
+//
+//		dflt := discovery.DefaultNamespace()
+//
+//		if ns.Index(dflt.Name) < 0 {
+//			s.l.Infow("creating default namespace", "name", dflt.Name)
+//
+//			if _, err := r.RegisterNamespace(*dflt); err != nil {
+//				return err
+//			}
+//		}
+//
+//		a := &API{
+//			r:            r,
+//			tokenHandler: tokenHandler,
+//		}
+//
+//		// discoveryv1.RegisterServerAPIServer(s.grpcServer, a)
+//		// discoveryv1.RegisterServiceAPIServer(s.grpcServer, a)
+//		// discoveryv1.RegisterNamespaceAPIServer(s.grpcServer, a)
+//		// discoveryv1.RegisterTokenAPIServer(s.grpcServer, a)
+//
+//		// grpc reflection support
+//		reflection.Register(s.grpcServer)
+//
+//		listener, err := net.Listen("tcp", s.config.GRPCListenAddr)
+//		if err != nil {
+//			return err
+//		}
+//
+//		return s.grpcServer.Serve(listener)
+//	}
 
-	go func() {
-		defer close(errChan)
+func (s *Server) stop() {
+	s.ready.Swap(false)
 
-		if err := s.stopHTTP(); err != nil {
-			errChan <- err
-		}
-	}()
-
-	go func() {
-		s.stopGRPC()
-	}()
-
-	return <-errChan
-}
-
-func (s *Server) stopGRPC() {
-	defer func() {
-		if s.wg != nil {
-			s.wg.Done()
-		}
-	}()
-	defer s.l.Infow("grpc server stopped")
-
-	if s.grpcServer == nil {
-		return
-	}
-
-	s.grpcServer.GracefulStop()
-}
-
-func (s *Server) stopHTTP() error {
-	defer s.wg.Done()
-	defer s.l.Info("http server stopped")
-
-	if s.httpServer == nil {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), httpStopTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	return s.httpServer.Shutdown(ctx)
+	if err := s.httpServer.Shutdown(ctx); err != nil {
+		s.l.Error("shutdown connect server", slog.Any("err", err))
+	}
+
+	s.l.Info("http server stopped")
 }
 
-func getGRPCEndpointFromListenAddr(grpcep string) (string, error) {
-	tcpaddr, err := net.ResolveTCPAddr("tcp", grpcep)
-	if err != nil {
-		return "", fmt.Errorf("%s is not a valid listen address: %w", grpcep, err)
+func (s *Server) readyHandler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		if s.ready.Load() {
+			w.WriteHeader(http.StatusNoContent)
+
+			return
+		}
+
+		w.WriteHeader(http.StatusServiceUnavailable)
 	}
-
-	host := "localhost"
-
-	if tcpaddr.IP != nil && !tcpaddr.IP.IsUnspecified() {
-		host = tcpaddr.IP.String()
-	}
-
-	return net.JoinHostPort(host, fmt.Sprintf("%d", tcpaddr.Port)), nil
 }
