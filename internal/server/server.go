@@ -118,6 +118,8 @@ func (s *Server) createMux(api *API) *http.ServeMux {
 	mux.Handle(httpPath, handler)
 	httpPath, handler = discoveryv1connect.NewTokenAPIHandler(api)
 	mux.Handle(httpPath, handler)
+	httpPath, handler = discoveryv1connect.NewServiceAPIHandler(api)
+	mux.Handle(httpPath, handler)
 
 	return mux
 }
