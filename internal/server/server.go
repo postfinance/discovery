@@ -125,7 +125,7 @@ func (s *Server) createMux(api *API) *http.ServeMux {
 func (s *Server) startHTTP(ctx context.Context) error {
 	s.l.Infow("starting http server")
 
-	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey)
+	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey) // TODO: Fix
 
 	// verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
 	// if err != nil {
