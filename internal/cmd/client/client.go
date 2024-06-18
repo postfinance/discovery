@@ -5,21 +5,18 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/pkg/errors"
-	"github.com/postfinance/discovery/internal/auth"
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/zbindenren/king"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
+	"gitlab.pnet.ch/linux/go/crpcauth"
 	"gopkg.in/yaml.v3"
 )
 
@@ -49,41 +46,11 @@ type Globals struct {
 type oidc struct {
 	Endpoint         string `help:"OIDC endpoint URL."`
 	ClientID         string `help:"OIDC client ID."`
-	ExternalLoginCmd string `help:"If not empty, this command is printed out for the login sub command. The command should create a id_token in token-path."`
+	ExternalLoginCmd string `help:"If not empty, this command is printed out for the login sub command. The command should create a id_token in token-path." required:"true"`
 }
 
 func (g Globals) ctx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), g.Timeout)
-}
-
-func (g Globals) conn() (*grpc.ClientConn, error) {
-	dialOption := grpc.WithTransportCredentials(insecure.NewCredentials())
-
-	if !g.Insecure {
-		pool, err := x509.SystemCertPool()
-		if err != nil {
-			return nil, err
-		}
-
-		if g.CACert != "" {
-			pool, err = auth.AppendCertsToSystemPool(g.CACert)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		creds := credentials.NewClientTLSFromCert(pool, "")
-		dialOption = grpc.WithTransportCredentials(creds)
-	}
-
-	token, err := g.getToken()
-	if err != nil {
-		return nil, err
-	}
-
-	dialOpts := []grpc.DialOption{dialOption, grpc.WithUnaryInterceptor(buildClientInterceptor(token))}
-
-	return grpc.Dial(g.Address, dialOpts...)
 }
 
 func (g Globals) serverClient() (discoveryv1connect.ServerAPIClient, error) {
@@ -92,7 +59,12 @@ func (g Globals) serverClient() (discoveryv1connect.ServerAPIClient, error) {
 		return nil, err
 	}
 
-	return discoveryv1connect.NewServerAPIClient(c, g.Address), nil
+	token, err := g.loadToken()
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryv1connect.NewServerAPIClient(c, g.Address, connect.WithInterceptors(crpcauth.WithToken(token))), nil
 }
 
 func (g Globals) serviceClient() (discoveryv1connect.ServiceAPIClient, error) {
@@ -101,7 +73,12 @@ func (g Globals) serviceClient() (discoveryv1connect.ServiceAPIClient, error) {
 		return nil, err
 	}
 
-	return discoveryv1connect.NewServiceAPIClient(c, g.Address), nil
+	token, err := g.loadToken()
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryv1connect.NewServiceAPIClient(c, g.Address, connect.WithInterceptors(crpcauth.WithToken(token))), nil
 }
 
 func (g Globals) namespaceClient() (discoveryv1connect.NamespaceAPIClient, error) {
@@ -110,7 +87,12 @@ func (g Globals) namespaceClient() (discoveryv1connect.NamespaceAPIClient, error
 		return nil, err
 	}
 
-	return discoveryv1connect.NewNamespaceAPIClient(c, g.Address), nil
+	token, err := g.loadToken()
+	if err != nil {
+		return nil, err
+	}
+
+	return discoveryv1connect.NewNamespaceAPIClient(c, g.Address, connect.WithInterceptors(crpcauth.WithToken(token))), nil
 }
 
 func (g Globals) tokenClient() (discoveryv1connect.TokenAPIClient, error) {
@@ -122,97 +104,35 @@ func (g Globals) tokenClient() (discoveryv1connect.TokenAPIClient, error) {
 	return discoveryv1connect.NewTokenAPIClient(c, g.Address), nil
 }
 
-func buildClientInterceptor(token string) func(context.Context, string, interface{}, interface{}, *grpc.ClientConn, grpc.UnaryInvoker, ...grpc.CallOption) error {
-	return func(ctx context.Context, method string, req interface{}, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-		ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "bearer "+token)
-
-		return invoker(ctx, method, req, reply, cc, opts...)
-	}
-}
-
 type token struct {
 	MachineToken string `yaml:"machine_token"` // for machines
 	RefreshToken string `yaml:"refresh_token"`
 	IDToken      string `yaml:"id_token"`
 }
 
-func (g Globals) loadToken() (*token, error) {
+func (g Globals) loadToken() (string, error) {
 	path := kong.ExpandPath(g.TokenPath)
 
 	d, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	t := &token{}
 
 	if err := yaml.Unmarshal(d, t); err != nil {
-		return nil, err
+		return "", err
 	}
 
-	return t, nil
-}
-
-func (g Globals) saveToken(t *auth.Token) error {
-	path := kong.ExpandPath(g.TokenPath)
-	dir := filepath.Dir(path)
-
-	if err := os.MkdirAll(dir, 0o750); err != nil {
-		return err
-	}
-
-	d, err := yaml.Marshal(t)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, d, 0o600)
-}
-
-// getToken loads or asks for user or machine token. If it is
-// a user token it refreshes it if necessary.
-func (g Globals) getToken() (string, error) {
-	var token string
-
-	t, err := g.loadToken()
-	if err != nil {
-		return "", errors.Wrap(err, "login required")
-	}
-
-	if err == nil && t.MachineToken == "" {
-		if t.RefreshToken != "" {
-			cli, err := auth.NewClient(g.OIDC.Endpoint, g.OIDC.ClientID)
-			if err != nil {
-				return "", err
-			}
-
-			tkn := &auth.Token{
-				RefreshToken: t.RefreshToken,
-				IDToken:      t.IDToken,
-			}
-
-			nt, err := cli.Refresh(tkn)
-			if err != nil {
-				return "", err
-			}
-
-			token = nt.IDToken
-
-			if nt.IDToken != t.IDToken {
-				if err := g.saveToken(nt); err != nil {
-					return "", err
-				}
-			}
-		} else {
-			token = t.IDToken
-		}
+	if t.MachineToken == "" && t.IDToken == "" {
+		return "", fmt.Errorf("no machine_token or id_token found in %s", filepath.Clean(path))
 	}
 
 	if t.MachineToken != "" {
-		token = t.MachineToken
+		return t.MachineToken, nil
 	}
 
-	return token, nil
+	return t.IDToken, nil
 }
 
 func (g Globals) httpClient() (*http.Client, error) {

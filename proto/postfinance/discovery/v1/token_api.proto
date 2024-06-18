@@ -24,6 +24,7 @@ message CreateRequest {
   string id = 1;
   repeated string namespaces = 2;
   string expires = 3;
+  repeated string roles = 4;
 }
 
 message CreateResponse {

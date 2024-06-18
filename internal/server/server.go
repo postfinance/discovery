@@ -10,13 +10,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"connectrpc.com/connect"
 	"github.com/postfinance/discovery"
-	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/registry"
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/postfinance/store"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"gitlab.pnet.ch/linux/go/auth/self"
 	"go.uber.org/zap"
 )
 
@@ -46,13 +47,8 @@ type Config struct {
 	PrometheusRegistry prometheus.Registerer
 	NumReplicas        int
 	ListenAddr         string
-	TokenIssuer        string
-	TokenSecretKey     string
-	OIDCClient         string
-	OIDCRoles          []string
-	OIDCURL            string
-	Transport          http.RoundTripper
-	ClaimConfig        auth.ClaimConfig
+	TokenHandler       *self.TokenHandler
+	Interceptors       []connect.Interceptor
 }
 
 // New initializes a new Server.
@@ -112,13 +108,13 @@ func (s *Server) createMux(api *API) *http.ServeMux {
 	mux.Handle("/swagger/", http.FileServer(http.FS(static)))
 	mux.Handle("/metrics", promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 
-	httpPath, handler := discoveryv1connect.NewServerAPIHandler(api)
+	httpPath, handler := discoveryv1connect.NewServerAPIHandler(api, connect.WithInterceptors(s.config.Interceptors...))
 	mux.Handle(httpPath, handler)
-	httpPath, handler = discoveryv1connect.NewNamespaceAPIHandler(api)
+	httpPath, handler = discoveryv1connect.NewNamespaceAPIHandler(api, connect.WithInterceptors(s.config.Interceptors...))
 	mux.Handle(httpPath, handler)
-	httpPath, handler = discoveryv1connect.NewTokenAPIHandler(api)
+	httpPath, handler = discoveryv1connect.NewTokenAPIHandler(api, connect.WithInterceptors(s.config.Interceptors...))
 	mux.Handle(httpPath, handler)
-	httpPath, handler = discoveryv1connect.NewServiceAPIHandler(api)
+	httpPath, handler = discoveryv1connect.NewServiceAPIHandler(api, connect.WithInterceptors(s.config.Interceptors...))
 	mux.Handle(httpPath, handler)
 
 	return mux
@@ -126,13 +122,6 @@ func (s *Server) createMux(api *API) *http.ServeMux {
 
 func (s *Server) startHTTP(ctx context.Context) error {
 	s.l.Infow("starting http server")
-
-	tokenHandler := auth.NewTokenHandler(s.config.TokenIssuer, s.config.TokenSecretKey) // TODO: Fix
-
-	// verifier, err := auth.NewVerifier(s.config.OIDCURL, s.config.OIDCClient, httpClientTimeout, s.config.Transport)
-	// if err != nil {
-	// 	return err
-	// }
 
 	if err := s.config.PrometheusRegistry.Register(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
@@ -169,7 +158,7 @@ func (s *Server) startHTTP(ctx context.Context) error {
 
 	a := &API{
 		r:            r,
-		tokenHandler: tokenHandler,
+		tokenHandler: s.config.TokenHandler,
 	}
 
 	mux := s.createMux(a)

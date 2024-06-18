@@ -3,18 +3,24 @@ package server
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 	"os"
 	"os/signal"
 	"regexp"
 	"syscall"
+	"time"
 
+	"connectrpc.com/connect"
 	"github.com/alecthomas/kong"
-	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/server"
+	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"github.com/zbindenren/king"
+	"gitlab.pnet.ch/linux/go/auth"
+	"gitlab.pnet.ch/linux/go/auth/oidc"
+	"gitlab.pnet.ch/linux/go/auth/self"
+	"gitlab.pnet.ch/linux/go/crpcauth"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +53,7 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 	registry.MustRegister(collectors.NewGoCollector())
 
-	config, err := s.config(registry)
+	config, err := s.config(l, registry)
 	if err != nil {
 		return err
 	}
@@ -66,7 +72,7 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	srv, err := server.New(b, l, config)
+	srv, err := server.New(b, l, *config)
 	if err != nil {
 		return err
 	}
@@ -74,28 +80,42 @@ func (s serverCmd) Run(g *Globals, l *zap.SugaredLogger, app *kong.Context, regi
 	return srv.Run(ctx)
 }
 
-func (s serverCmd) config(registry prometheus.Registerer) (server.Config, error) {
-	var transport http.RoundTripper
+func (s serverCmd) config(l *zap.SugaredLogger, registry prometheus.Registerer) (*server.Config, error) {
+	tokenHandler := self.NewTokenHandler(s.TokenIssuer, s.TokenSecret)
 
-	if s.CACert != "" {
-		pool, err := auth.AppendCertsToSystemPool(s.CACert)
-		if err != nil {
-			return server.Config{}, err
+	cfg := rbacConfig()
+
+	for _, c := range cfg {
+		for _, r := range c.Rules {
+			l.Debugw("rbac", "role", c.Role, "service", r.Service, "methods", r.Methods)
 		}
-
-		transport = auth.NewTLSTransportFromCertPool(pool)
 	}
 
-	return server.Config{
+	v, err := oidc.NewVerifier(s.OIDC.Endpoint, s.OIDC.ClientID, 30*time.Second, &oidc.PfportalClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("setup oidc token verifier (pfportal): %w", err)
+	}
+
+	a := crpcauth.NewAuthorizer(cfg,
+		crpcauth.WithVerifier("discovery.postfinance.ch", tokenHandler),
+		crpcauth.WithVerifierByIssuerAndClientID("https://p1-auth-oidc.pnet.ch:7048/auth/pfportal/openid", "cop", v),
+		crpcauth.WithAuthCallback(func(ctx context.Context, u auth.User) {
+			fmt.Println("-------", u.Name, u.Roles)
+		}),
+		crpcauth.WithPublicEndpoints(
+			discoveryv1connect.NamespaceAPIListNamespaceProcedure,
+			discoveryv1connect.ServerAPIListServerProcedure,
+			discoveryv1connect.ServiceAPIListServiceProcedure,
+			discoveryv1connect.TokenAPIInfoProcedure,
+			discoveryv1connect.TokenAPICreateProcedure, // TODO: Remove
+		),
+	)
+
+	return &server.Config{
 		PrometheusRegistry: registry,
 		NumReplicas:        s.Replicas,
 		ListenAddr:         s.ListenAddr,
-		TokenIssuer:        s.TokenIssuer,
-		TokenSecretKey:     s.TokenSecret,
-		OIDCClient:         s.OIDC.ClientID,
-		OIDCRoles:          s.OIDC.Roles,
-		OIDCURL:            s.OIDC.Endpoint,
-		ClaimConfig:        auth.NewClaimConfig(s.OIDC.UsernameClaim, s.OIDC.RolesClaim),
-		Transport:          transport,
+		TokenHandler:       tokenHandler,
+		Interceptors:       []connect.Interceptor{a.UnaryServerInterceptor()},
 	}, nil
 }

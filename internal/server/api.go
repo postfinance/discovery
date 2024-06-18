@@ -5,18 +5,20 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/postfinance/discovery"
-	"github.com/postfinance/discovery/internal/auth"
 	"github.com/postfinance/discovery/internal/exporter"
 	"github.com/postfinance/discovery/internal/registry"
 	"github.com/postfinance/discovery/internal/repo"
 	"github.com/postfinance/discovery/internal/server/convert"
+	"github.com/postfinance/discovery/internal/user"
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
+	"gitlab.pnet.ch/linux/go/auth"
+	goauth "gitlab.pnet.ch/linux/go/auth"
+	"gitlab.pnet.ch/linux/go/auth/self"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -31,7 +33,7 @@ var (
 // API implements the GRPC API.
 type API struct {
 	r            *registry.Registry
-	tokenHandler *auth.TokenHandler
+	tokenHandler *self.TokenHandler
 }
 
 // ListService implements discoveryv1connect.ServiceAPIHandler.
@@ -91,7 +93,7 @@ func (a *API) ListTargetGroup(_ context.Context, in *connect.Request[discoveryv1
 
 // RegisterService implements discoveryv1connect.ServiceAPIHandler.
 func (a *API) RegisterService(ctx context.Context, req *connect.Request[discoveryv1.RegisterServiceRequest]) (*connect.Response[discoveryv1.RegisterServiceResponse], error) {
-	if err := verifyUser(ctx, req.Msg.GetNamespace()); err != nil {
+	if err := verifyNamespace(ctx, req.Msg.GetNamespace()); err != nil {
 		return nil, err
 	}
 
@@ -134,7 +136,7 @@ func (a *API) RegisterService(ctx context.Context, req *connect.Request[discover
 
 // UnRegisterService implements discoveryv1connect.ServiceAPIHandler.
 func (a *API) UnRegisterService(ctx context.Context, req *connect.Request[discoveryv1.UnRegisterServiceRequest]) (*connect.Response[discoveryv1.UnRegisterServiceResponse], error) {
-	if err := verifyUser(ctx, req.Msg.GetNamespace()); err != nil {
+	if err := verifyNamespace(ctx, req.Msg.GetNamespace()); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +167,13 @@ func (a *API) Create(_ context.Context, req *connect.Request[discoveryv1.CreateR
 		expiry = d
 	}
 
-	token, err := a.tokenHandler.Create(req.Msg.GetId(), expiry, req.Msg.GetNamespaces()...)
+	u := goauth.User{
+		Name:  req.Msg.GetId(),
+		Roles: req.Msg.GetRoles(),
+		Data:  req.Msg.GetNamespaces(),
+	}
+
+	token, err := a.tokenHandler.Create(expiry, u)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to create token: %w", err))
 	}
@@ -178,17 +186,23 @@ func (a *API) Create(_ context.Context, req *connect.Request[discoveryv1.CreateR
 }
 
 // Info implements discoveryv1connect.TokenAPIHandler.
-func (a *API) Info(_ context.Context, in *connect.Request[discoveryv1.InfoRequest]) (*connect.Response[discoveryv1.InfoResponse], error) {
-	u, err := a.tokenHandler.Validate(in.Msg.GetToken())
+func (a *API) Info(ctx context.Context, in *connect.Request[discoveryv1.InfoRequest]) (*connect.Response[discoveryv1.InfoResponse], error) {
+	u, err := a.tokenHandler.Verify(ctx, in.Msg.GetToken())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("token %s is not valid: %w", in.Msg.GetToken(), err))
 	}
 
+	ns := []string{}
+
+	userNS := goauth.MustGetData[[]string](*u)
+	if userNS != nil {
+		ns = *userNS
+	}
+
 	resp := connect.NewResponse(&discoveryv1.InfoResponse{
 		Tokeninfo: &discoveryv1.TokenInfo{
-			Id:         u.Username,
-			Namespaces: u.Namespaces,
-			ExpiresAt:  convert.TimeToPB(&u.ExpiresAt),
+			Id:         u.Name,
+			Namespaces: ns,
 		},
 	})
 
@@ -299,14 +313,14 @@ func (a *API) UnregisterNamespace(_ context.Context, req *connect.Request[discov
 	return resp, nil
 }
 
-func verifyUser(ctx context.Context, namespace string) error {
-	u, ok := auth.UserFromContext(ctx)
+func verifyNamespace(ctx context.Context, namespace string) error {
+	u, ok := goauth.UserFromContext(ctx)
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "unauthententicated user")
 	}
 
-	if u.IsMachine() && !u.HasNamespace(namespace) {
-		return status.Errorf(codes.PermissionDenied, "machine token %s (%s) is not allowed to change service in %s namespace", u.Username, strings.Join(u.Namespaces, ","), namespace)
+	if u.Kind == auth.SelfIssuedToken && !user.HasNamespace(u, namespace) {
+		return status.Errorf(codes.PermissionDenied, "machine token %s is not allowed to change service in %s namespace", u.Name, namespace)
 	}
 
 	return nil

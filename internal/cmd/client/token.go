@@ -35,6 +35,7 @@ func (t tokenCreate) Run(g *Globals, l *zap.SugaredLogger, c *kong.Context) erro
 		Expires:    t.Expiry.String(),
 		Id:         t.ID,
 		Namespaces: t.Namespaces,
+		Roles:      []string{"machine"},
 	}))
 	if err != nil {
 		return err
