@@ -2,14 +2,14 @@ package server
 
 import (
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
-	goauth "gitlab.pnet.ch/linux/go/auth"
+	"gitlab.pnet.ch/linux/go/auth"
 )
 
-func rbacConfig() []goauth.Config {
-	return []goauth.Config{
+func rbacConfig() []auth.Config {
+	return []auth.Config{
 		{
 			Role: "cop_appl_linux",
-			Rules: []goauth.Rule{
+			Rules: []auth.Rule{
 				{
 					Service: discoveryv1connect.NamespaceAPIName,
 					Methods: []string{
@@ -46,7 +46,7 @@ func rbacConfig() []goauth.Config {
 		},
 		{
 			Role: "machine",
-			Rules: []goauth.Rule{
+			Rules: []auth.Rule{
 				{
 					Service: discoveryv1connect.NamespaceAPIName,
 					Methods: []string{

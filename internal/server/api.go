@@ -17,7 +17,6 @@ import (
 	discoveryv1 "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1"
 	discoveryv1connect "github.com/postfinance/discovery/pkg/discoverypb/postfinance/discovery/v1/discoveryv1connect"
 	"gitlab.pnet.ch/linux/go/auth"
-	goauth "gitlab.pnet.ch/linux/go/auth"
 	"gitlab.pnet.ch/linux/go/auth/self"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -167,7 +166,7 @@ func (a *API) Create(_ context.Context, req *connect.Request[discoveryv1.CreateR
 		expiry = d
 	}
 
-	u := goauth.User{
+	u := auth.User{
 		Name:  req.Msg.GetId(),
 		Roles: req.Msg.GetRoles(),
 		Data:  req.Msg.GetNamespaces(),
@@ -194,7 +193,7 @@ func (a *API) Info(ctx context.Context, in *connect.Request[discoveryv1.InfoRequ
 
 	ns := []string{}
 
-	userNS := goauth.MustGetData[[]string](*u)
+	userNS := auth.MustGetData[[]string](*u)
 	if userNS != nil {
 		ns = *userNS
 	}
@@ -314,7 +313,7 @@ func (a *API) UnregisterNamespace(_ context.Context, req *connect.Request[discov
 }
 
 func verifyNamespace(ctx context.Context, namespace string) error {
-	u, ok := goauth.UserFromContext(ctx)
+	u, ok := auth.UserFromContext(ctx)
 	if !ok {
 		return status.Errorf(codes.Unauthenticated, "unauthententicated user")
 	}
